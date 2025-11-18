@@ -1,19 +1,68 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useCurrentUser, useMyProfile, useWall as useWallHook, useCreateProject, useUpdateProject, useUpdateWall, useTeamMembers, useCreateTeamMember, useUpdateTeamMember, useDeleteTeamMember } from "@/lib/api-hooks";
+import {
+  useCurrentUser,
+  useMyProfile,
+  useWall as useWallHook,
+  useCreateProject,
+  useUpdateProject,
+  useUpdateWall,
+  useTeamMembers,
+  useCreateTeamMember,
+  useUpdateTeamMember,
+  useDeleteTeamMember,
+} from "@/lib/api-hooks";
 import axiosInstance from "@/lib/axios";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import StudioIdentity from "@/components/StudioIdentity";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, MapPin, Mail, Eye, Edit, Video, Briefcase, Users, BookOpen, Plus, X, Trash2, Globe, Lock, User, Linkedin, Twitter, Instagram, ExternalLink, Award, ChevronDown, ArrowRight, Building2, Network, Shield } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Loader2,
+  MapPin,
+  Mail,
+  Eye,
+  Edit,
+  Video,
+  Briefcase,
+  Users,
+  BookOpen,
+  Plus,
+  X,
+  Trash2,
+  Globe,
+  Lock,
+  User,
+  Linkedin,
+  Twitter,
+  Instagram,
+  ExternalLink,
+  Award,
+  ChevronDown,
+  ArrowRight,
+  Building2,
+  Network,
+  Shield,
+} from "lucide-react";
 import RatingStars from "@/components/RatingStars";
 import { toast } from "sonner";
 
@@ -30,7 +79,8 @@ const WallView = () => {
   const loading = wallLoading;
 
   // Load projects
-  const [projects, setProjects] = useState<Array<{
+  const [projects, setProjects] = useState<
+    Array<{
     _id: string;
     title: string;
     description?: string;
@@ -40,7 +90,8 @@ const WallView = () => {
     showreel_url?: string;
     showreel_type?: string;
     order_index?: number;
-  }>>([]);
+    }>
+  >([]);
   const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<{
     _id: string;
@@ -58,12 +109,32 @@ const WallView = () => {
   const { mutateAsync: updateWall } = useUpdateWall();
   
   // Team members
-  const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(id!);
+  const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(
+    id!
+  );
   const createTeamMemberMutation = useCreateTeamMember();
   const updateTeamMemberMutation = useUpdateTeamMember();
   const deleteTeamMemberMutation = useDeleteTeamMember();
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const [editingTeamMember, setEditingTeamMember] = useState<{
+    _id: string;
+    name: string;
+    role: string;
+    bio?: string;
+    email?: string;
+    experience_years?: number;
+    skills?: string[];
+    avatar_url?: string;
+    social_links?: {
+      linkedin?: string;
+      twitter?: string;
+      instagram?: string;
+      website?: string;
+      portfolio?: string;
+    };
+    order_index?: number;
+  } | null>(null);
+  const [selectedTeamMember, setSelectedTeamMember] = useState<{
     _id: string;
     name: string;
     role: string;
@@ -88,7 +159,7 @@ const WallView = () => {
         const response = await axiosInstance.get(`/projects/wall/${id}`);
         setProjects(response.data || []);
       } catch (error) {
-        console.error('Error loading projects:', error);
+      console.error("Error loading projects:", error);
       }
   }, [id]);
 
@@ -102,9 +173,11 @@ const WallView = () => {
       toast.success("Project deleted successfully!");
       loadProjects();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
+      const errorMessage =
+        error instanceof Error
         ? error.message 
-        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to delete project";
+          : (error as { response?: { data?: { error?: string } } })?.response
+              ?.data?.error || "Failed to delete project";
       toast.error(errorMessage);
     }
   };
@@ -123,18 +196,21 @@ const WallView = () => {
   useEffect(() => {
     if (wall && profile) {
       const wallOwner = wall.user_id;
-      const isOwnerCheck = profile && wallOwner && (
-        (typeof wallOwner === 'object' && profile._id?.toString() === wallOwner._id?.toString()) ||
-        (typeof wallOwner === 'string' && profile._id?.toString() === wallOwner.toString())
-      );
+      const isOwnerCheck =
+        profile &&
+        wallOwner &&
+        ((typeof wallOwner === "object" &&
+          profile._id?.toString() === wallOwner._id?.toString()) ||
+          (typeof wallOwner === "string" &&
+            profile._id?.toString() === wallOwner.toString()));
       console.log("Wall ownership check:", {
         profileId: profile._id,
         wallUserId: wall.user_id,
         wallUserIdType: typeof wall.user_id,
-        wallOwnerId: typeof wallOwner === 'object' ? wallOwner._id : wallOwner,
+        wallOwnerId: typeof wallOwner === "object" ? wallOwner._id : wallOwner,
         isOwner: isOwnerCheck,
         profileExists: !!profile,
-        wallOwnerExists: !!wallOwner
+        wallOwnerExists: !!wallOwner,
       });
     }
   }, [wall, profile]);
@@ -150,10 +226,13 @@ const WallView = () => {
   const wallOwner = wall.user_id;
   // Check ownership: wall.user_id can be either the profile object (populated) or profile._id string
   // Compare profile._id with wall.user_id._id (if populated) or wall.user_id (if string)
-  const isOwner = profile && wallOwner && (
-    (typeof wallOwner === 'object' && profile._id?.toString() === wallOwner._id?.toString()) ||
-    (typeof wallOwner === 'string' && profile._id?.toString() === wallOwner.toString())
-  );
+  const isOwner =
+    profile &&
+    wallOwner &&
+    ((typeof wallOwner === "object" &&
+      profile._id?.toString() === wallOwner._id?.toString()) ||
+      (typeof wallOwner === "string" &&
+        profile._id?.toString() === wallOwner.toString()));
 
   return (
     <div className="min-h-screen bg-background">
@@ -182,8 +261,20 @@ const WallView = () => {
           className="mb-3"
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-2">
+            <div className="flex items-start gap-4">
+              {wall?.logo_url && (
+                <div className="flex-shrink-0 rounded-full">
+                  <img
+                    src={wall.logo_url}
+                    alt="Studio Logo"
+                    className="h-16 md:h-20 w-20 object-cover rounded-full"
+                  />
+                </div>
+              )}
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold red-glow-intense mb-1">{wall?.title}</h1>
+                <h1 className="text-4xl md:text-5xl font-bold red-glow-intense mb-1">
+                  {wall?.title}
+                </h1>
               {wallOwner && (
                 <div className="flex items-center gap-4 text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -204,6 +295,7 @@ const WallView = () => {
                   </div>
                 </div>
               )}
+              </div>
             </div>
             <div className="flex gap-2">
               {isOwner && (
@@ -214,7 +306,7 @@ const WallView = () => {
                       try {
                         await updateWall({
                           id: id!,
-                          data: { published: !wall.published }
+                          data: { published: !wall.published },
                         });
                         toast.success(
                           wall.published 
@@ -224,9 +316,15 @@ const WallView = () => {
                         // Refresh the page data
                         window.location.reload();
                       } catch (error: unknown) {
-                        const errorMessage = error instanceof Error 
+                        const errorMessage =
+                          error instanceof Error
                           ? error.message 
-                          : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to update publish status";
+                            : (
+                                error as {
+                                  response?: { data?: { error?: string } };
+                                }
+                              )?.response?.data?.error ||
+                              "Failed to update publish status";
                         toast.error(errorMessage);
                       }
                     }}
@@ -252,10 +350,16 @@ const WallView = () => {
                 </>
               )}
               {wallOwner?.email && (
-                <Button onClick={() => {
-                  const contactSection = document.getElementById('contact-section');
-                  contactSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}>
+                <Button
+                  onClick={() => {
+                    const contactSection =
+                      document.getElementById("contact-section");
+                    contactSection?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }}
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Get in Touch
                 </Button>
@@ -272,7 +376,6 @@ const WallView = () => {
 
         {/* Single Scrollable Page with Sections */}
         <div className="space-y-8 scroll-smooth">
-
           {/* Overview Section */}
           <section id="overview-section" className="scroll-mt-24 space-y-4">
             {wall?.showreel_url && wall?.showreel_type && (
@@ -285,29 +388,32 @@ const WallView = () => {
               >
                 <div className="flex gap-0 items-start mt-12 mb-12">
                   {/* Vertical Text Label */}
-                  <div className="flex-shrink-0 flex items-start justify-start" style={{ 
-                    width: '120px',
-                    position: 'relative',
+                  <div
+                    className="flex-shrink-0 flex items-start justify-start"
+                    style={{
+                      width: "120px",
+                      position: "relative",
                     zIndex: 1,
-                    alignSelf: 'flex-start'
-                  }}>
+                      alignSelf: "flex-start",
+                    }}
+                  >
                     <div 
                       className="text-vertical-outline-red text-5xl md:text-6xl lg:text-[80px]"
                       style={{ 
-                        transform: 'rotate(-90deg)',
-                        transformOrigin: 'center',
-                        whiteSpace: 'nowrap',
-                        height: 'fit-content',
-                        width: 'fit-content',
-                        position: 'absolute',
+                        transform: "rotate(-90deg)",
+                        transformOrigin: "center",
+                        whiteSpace: "nowrap",
+                        height: "fit-content",
+                        width: "fit-content",
+                        position: "absolute",
                         top: 240,
-                        left: '-100%',
-                        marginLeft: '-70px',
+                        left: "-100%",
+                        marginLeft: "-70px",
                       }}
                     >
-                      {'SHOWREEL'.split('').map((letter, index) => (
+                      {"SHOWREEL".split("").map((letter, index) => (
                         <span key={index} className="letter inline-block">
-                          {letter === ' ' ? '\u00A0' : letter}
+                          {letter === " " ? "\u00A0" : letter}
                         </span>
                       ))}
                     </div>
@@ -327,81 +433,51 @@ const WallView = () => {
               </motion.div>
             )}
 
-            {/* Studio Identity and Brand Identity Side by Side */}
+            {/* Associations Section */}
+            {wallOwner?.associations && wallOwner.associations.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            >
-              {/* Studio Identity (Logo & Tagline) */}
-              <Card className="p-6 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border-2 border-primary/20">
-                <h3 className="text-xl font-bold mb-4 text-center">Studio Identity</h3>
-                <div className="space-y-4">
-                  {wall?.logo_url && (
-                    <div className="flex justify-center">
-                      <img
-                        src={wall.logo_url}
-                        alt="Studio Logo"
-                        className="h-24 w-auto object-contain"
-                      />
-                    </div>
-                  )}
-                  {wall?.tagline && (
-                    <p className="text-lg text-muted-foreground italic text-center">
-                      "{wall.tagline}"
-                    </p>
-                  )}
-                </div>
-              </Card>
-
-              {/* Brand Identity (Colors) */}
-              {/* {wall?.brand_colors && (
-                <Card className="p-6 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border-2 border-primary/20">
-                  <h3 className="text-xl font-bold mb-4 text-center">Brand Identity</h3>
-                  <div className="flex justify-center gap-6">
-                    <div className="space-y-2">
-                      <div
-                        className="w-20 h-20 rounded-lg border-2 border-border shadow-lg"
-                        style={{ backgroundColor: (wall.brand_colors as { primary?: string; secondary?: string }).primary || "#ef4444" }}
-                      />
-                      <p className="text-sm text-muted-foreground text-center">Primary</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div
-                        className="w-20 h-20 rounded-lg border-2 border-border shadow-lg"
-                        style={{ backgroundColor: (wall.brand_colors as { primary?: string; secondary?: string }).secondary || "#1a1a1a" }}
-                      />
-                      <p className="text-sm text-muted-foreground text-center">Secondary</p>
-                    </div>
-                  </div>
-                </Card>
-              )} */}
-
-              {/* Associations Only */}
-            {wallOwner?.associations && wallOwner.associations.length > 0 && (
+                className="mt-8"
+              >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <Card className="p-6 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border-2 border-primary/20">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <Network className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-center">Associations</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-3 justify-center">
-                    {wallOwner.associations.map((assoc: string, index: number) => {
+                  transition={{ duration: 0.6 }}
+                  className="text-center mb-3"
+                >
+                  <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">
+                    Associations
+                  </h2>
+                  <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
+                </motion.div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {wallOwner.associations.map(
+                    (assoc: string, index: number) => {
                       // Select icon based on association name or use default
                       const getIcon = (name: string) => {
                         const lowerName = name.toLowerCase();
-                        if (lowerName.includes('academy') || lowerName.includes('award') || lowerName.includes('oscar') || lowerName.includes('ves')) {
+                        if (
+                          lowerName.includes("academy") ||
+                          lowerName.includes("award") ||
+                          lowerName.includes("oscar") ||
+                          lowerName.includes("ves")
+                        ) {
                           return Award;
-                        } else if (lowerName.includes('studio') || lowerName.includes('company') || lowerName.includes('corp')) {
+                        } else if (
+                          lowerName.includes("studio") ||
+                          lowerName.includes("company") ||
+                          lowerName.includes("corp")
+                        ) {
                           return Building2;
-                        } else if (lowerName.includes('union') || lowerName.includes('guild') || lowerName.includes('association')) {
+                        } else if (
+                          lowerName.includes("union") ||
+                          lowerName.includes("guild") ||
+                          lowerName.includes("association")
+                        ) {
                           return Shield;
                         } else {
                           return Network;
@@ -412,29 +488,28 @@ const WallView = () => {
                       return (
                         <motion.div
                           key={index}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          whileInView={{ opacity: 1, scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          whileHover={{ scale: 1.05 }}
-                          className="group"
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, margin: "-50px" }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
                         >
-                          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/20 hover:to-primary/10 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer">
-                            <IconComponent className="h-4 w-4 text-primary group-hover:scale-110 transition-transform duration-300" />
-                            <span className="text-sm md:text-base font-medium text-foreground group-hover:text-primary transition-colors">
+                          <Card className="p-4 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-xl h-full">
+                            <div className="flex items-start gap-3">
+                              <IconComponent className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-sm md:text-base leading-relaxed text-foreground font-medium">
                               {assoc}
-                            </span>
+                                </p>
                           </div>
-                        </motion.div>
-                      );
-                    })}
                   </div>
                 </Card>
               </motion.div>
+                      );
+                    }
             )}
+                </div>
             </motion.div>
-
-            
+            )}
 
             {/* Awards Timeline */}
             {wall?.awards && wall.awards.length > 0 && (
@@ -445,6 +520,18 @@ const WallView = () => {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="mt-8"
               >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6 }}
+                  className="text-center mb-3 mt-20"
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold mb-1 red-glow-intense">
+                    Awards
+                  </h2>
+                  <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
+                </motion.div>
                 <AwardsTimeline awards={wall.awards} />
               </motion.div>
             )}
@@ -459,7 +546,9 @@ const WallView = () => {
               transition={{ duration: 0.6 }}
               className="text-center mb-3"
             >
-              <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">Portfolio</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">
+                Projects
+              </h2>
               <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
             </motion.div>
             <div className="flex items-center justify-end mb-3">
@@ -489,8 +578,10 @@ const WallView = () => {
               )}
             </div>
             {projects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map((project: {
+              <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-8">
+                {projects.map(
+                  (
+                    project: {
                   _id: string;
                   title: string;
                   description?: string;
@@ -500,22 +591,24 @@ const WallView = () => {
                   showreel_url?: string;
                   showreel_type?: string;
                   order_index?: number;
-                }, index: number) => (
+                    },
+                    index: number
+                  ) => (
                   <motion.div
                     key={project._id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="relative group"
-                  >
-                    <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-primary/30 group">
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <Card className="overflow-hidden border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:-translate-y-2 h-full">
                       {project.media_url && (
-                        <div className="aspect-video overflow-hidden">
+                          <div className="relative aspect-video overflow-hidden">
                           {project.media_type === "video" ? (
                             <video
                               src={project.media_url}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               muted
                               loop
                               playsInline
@@ -524,55 +617,64 @@ const WallView = () => {
                             <img
                               src={project.media_url}
                               alt={project.title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                           )}
-                        </div>
-                      )}
-                      <div className="p-6 space-y-2">
+                            {/* <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" /> */}
                         {isOwner && (
-                          <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                             <Button
                               size="sm"
                               variant="secondary"
                               onClick={() => setEditingProject(project)}
-                              className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleDeleteProject(project._id)}
-                              className="h-8 w-8 p-0"
+                                  onClick={() =>
+                                    handleDeleteProject(project._id)
+                                  }
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         )}
-                        {project.category && (
-                          <span className="text-xs text-primary uppercase tracking-wider">
-                            {project.category}
-                          </span>
+                            {/* {project.category && (
+                            <div className="absolute top-4 left-4">
+                              <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-4 py-2 rounded-full border border-primary/30">
+                                <Briefcase className="h-4 w-4 text-primary" />
+                                <span className="text-xs font-semibold text-foreground">{project.category}</span>
+                              </div>
+                            </div>
+                          )} */}
+                          </div>
                         )}
-                        <h3 className="text-xl font-bold">{project.title}</h3>
-                        {project.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
+                        <div className="p-4 space-y-4">
+                          <h3 className="text-2xl font-bold ">
+                            {project.title}
+                          </h3>
+                          {/* {project.description && (
+                          <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
                             {project.description}
                           </p>
-                        )}
-                        {project.showreel_url && project.showreel_type && (
-                          <div className="pt-4">
+                        )} */}
+                          {/* {project.showreel_url && project.showreel_type && (
+                          <div className="pt-2">
                             <VideoPlayer
                               url={project.showreel_url}
                               type={project.showreel_type as "embed" | "upload"}
                             />
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </Card>
                   </motion.div>
-                ))}
+                  )
+                )}
               </div>
             ) : (
               <motion.div
@@ -609,7 +711,9 @@ const WallView = () => {
               transition={{ duration: 0.6 }}
               className="text-center mb-3"
             >
-              <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">Our Team</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">
+                Our Team
+              </h2>
               <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
             </motion.div>
             <div className="flex items-center justify-end mb-3">
@@ -627,7 +731,9 @@ const WallView = () => {
                         setEditingTeamMember(null);
                       }}
                       open={!!editingTeamMember}
-                      onOpenChange={(open) => !open && setEditingTeamMember(null)}
+                      onOpenChange={(open) =>
+                        !open && setEditingTeamMember(null)
+                      }
                     />
                   )}
                 </>
@@ -638,8 +744,10 @@ const WallView = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : teamMembers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {teamMembers.map((member: {
+              <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-8">
+                {teamMembers.map(
+                  (
+                    member: {
                   _id: string;
                   name: string;
                   role: string;
@@ -655,79 +763,163 @@ const WallView = () => {
                     website?: string;
                     portfolio?: string;
                   };
-                }, index: number) => (
+                    },
+                    index: number
+                  ) => (
                   <motion.div
                     key={member._id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="relative group"
-                  >
-                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/30">
-                      <div className="p-6">
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <Card 
+                        className="overflow-hidden border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:-translate-y-2 h-full cursor-pointer"
+                        onClick={() => setSelectedTeamMember(member)}
+                      >
+                        {member.avatar_url ? (
+                          <div className="relative aspect-video overflow-hidden">
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
                         {isOwner && (
                           <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => setEditingTeamMember(member)}
-                              className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTeamMember(member);
+                                  }}
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={async () => {
-                                if (confirm("Are you sure you want to remove this team member?")) {
-                                  try {
-                                    await deleteTeamMemberMutation.mutateAsync(member._id);
-                                    toast.success("Team member removed successfully!");
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (
+                                      confirm(
+                                        "Are you sure you want to remove this team member?"
+                                      )
+                                    ) {
+                                      try {
+                                        await deleteTeamMemberMutation.mutateAsync(
+                                          member._id
+                                        );
+                                        toast.success(
+                                          "Team member removed successfully!"
+                                        );
                                   } catch (error: unknown) {
-                                    const errorMessage = error instanceof Error 
+                                        const errorMessage =
+                                          error instanceof Error
                                       ? error.message 
-                                      : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to remove team member";
+                                            : (
+                                                error as {
+                                                  response?: {
+                                                    data?: { error?: string };
+                                                  };
+                                                }
+                                              )?.response?.data?.error ||
+                                              "Failed to remove team member";
                                     toast.error(errorMessage);
                                   }
                                 }
                               }}
-                              className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         )}
-                        <div className="flex flex-col items-center text-center space-y-4">
-                          {member.avatar_url ? (
-                            <motion.img
-                              src={member.avatar_url}
-                              alt={member.name}
-                              className="w-24 h-24 rounded-full object-cover border-4 border-primary/20"
-                              whileHover={{ scale: 1.05 }}
-                              transition={{ duration: 0.2 }}
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
-                              <User className="h-12 w-12 text-primary/50" />
+                          </div>
+                        ) : (
+                          <div className="relative aspect-video overflow-hidden bg-primary/10 flex items-center justify-center">
+                            <User className="h-24 w-24 text-primary/50" />
+                            {isOwner && (
+                              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTeamMember(member);
+                                  }}
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (
+                                      confirm(
+                                        "Are you sure you want to remove this team member?"
+                                      )
+                                    ) {
+                                      try {
+                                        await deleteTeamMemberMutation.mutateAsync(
+                                          member._id
+                                        );
+                                        toast.success(
+                                          "Team member removed successfully!"
+                                        );
+                                      } catch (error: unknown) {
+                                        const errorMessage =
+                                          error instanceof Error
+                                            ? error.message
+                                            : (
+                                                error as {
+                                                  response?: {
+                                                    data?: { error?: string };
+                                                  };
+                                                }
+                                              )?.response?.data?.error ||
+                                              "Failed to remove team member";
+                                        toast.error(errorMessage);
+                                      }
+                                    }
+                                  }}
+                                  className="h-8 w-8 p-0 bg-background/80 backdrop-blur-sm"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                             </div>
                           )}
-                          <div className="space-y-1">
-                            <h3 className="text-xl font-bold">{member.name}</h3>
-                            <p className="text-sm text-primary font-semibold">{member.role}</p>
+                          </div>
+                        )}
+                        <div className="p-4 space-y-4">
+                          <div className="space-y-1 flex flex-col items-center justify-center">
+                            <h3 className="text-2xl font-bold">
+                              {member.name}
+                            </h3>
+                            <p className="text-sm text-primary font-semibold">
+                              {member.role}
+                            </p>
                             {member.experience_years && (
                               <p className="text-xs text-muted-foreground">
-                                {member.experience_years} {member.experience_years === 1 ? 'year' : 'years'} of experience
+                                {member.experience_years}{" "}
+                                {member.experience_years === 1
+                                  ? "year"
+                                  : "years"}{" "}
+                                of experience
                               </p>
                             )}
                           </div>
-                          {member.bio && (
-                            <p className="text-sm text-muted-foreground line-clamp-3">
+                          {/* {member.bio && (
+                          <p className="text-sm text-foreground/80 leading-relaxed line-clamp-3">
                               {member.bio}
                             </p>
-                          )}
-                          {member.skills && member.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-2 justify-center">
+                        )} */}
+                          {/* {member.skills && member.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
                               {member.skills.map((skill: string, idx: number) => (
                                 <span
                                   key={idx}
@@ -737,8 +929,8 @@ const WallView = () => {
                                 </span>
                               ))}
                             </div>
-                          )}
-                          {member.social_links && (
+                        )} */}
+                          {/* {member.social_links && (
                             <div className="flex gap-2 pt-2">
                               {member.social_links.linkedin && (
                                 <Button size="sm" variant="ghost" asChild>
@@ -776,20 +968,20 @@ const WallView = () => {
                                 </Button>
                               )}
                             </div>
-                          )}
-                          {member.email && (
-                            <Button size="sm" variant="outline" asChild>
+                        )} */}
+                          {/* {member.email && (
+                          <Button size="sm" variant="outline" asChild className="w-full">
                               <a href={`mailto:${member.email}`}>
                                 <Mail className="h-4 w-4 mr-2" />
                                 Contact
                               </a>
                             </Button>
-                          )}
-                        </div>
+                        )} */}
                       </div>
                 </Card>
               </motion.div>
-                ))}
+                  )
+                )}
               </div>
             ) : (
               <motion.div
@@ -800,7 +992,9 @@ const WallView = () => {
               >
                 <Card className="p-12 text-center border-dashed">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">No team members yet</p>
+                  <p className="text-muted-foreground mb-4">
+                    No team members yet
+                  </p>
                   {isOwner && (
                     <Button onClick={() => setIsTeamDialogOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
@@ -821,6 +1015,13 @@ const WallView = () => {
                 onOpenChange={setIsTeamDialogOpen}
               />
             )}
+            {selectedTeamMember && (
+              <TeamMemberDetailsDialog
+                teamMember={selectedTeamMember}
+                open={!!selectedTeamMember}
+                onOpenChange={(open) => !open && setSelectedTeamMember(null)}
+              />
+            )}
           </section>
 
           {/* Journey Section */}
@@ -836,7 +1037,9 @@ const WallView = () => {
               >
                 <Card className="p-12 text-center border-dashed">
                   <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No journey content available</p>
+                  <p className="text-muted-foreground">
+                    No journey content available
+                  </p>
                 </Card>
               </motion.div>
             )}
@@ -865,8 +1068,6 @@ const WallView = () => {
                   <div className="absolute bottom-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
                   
                   <div className="relative z-10">
-                   
-
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
                       <div>
                       <motion.div
@@ -879,11 +1080,16 @@ const WallView = () => {
                       <div className="inline-flex items-center justify-center w-[100px] h-[100px] rounded-full bg-primary/20 border-2 border-primary/40 mb-2">
                         <Mail className="h-[50px] w-[50px] text-primary" />
                       </div>
-                      <h2 className="text-2xl md:text-4xl font-bold mb-1 red-glow-intense">Get in Touch</h2>
-                      <p className="text-xs text-muted-foreground">Send us a message and we'll get back to you soon</p>
+                          <h2 className="text-2xl md:text-4xl font-bold mb-1 red-glow-intense">
+                            Get in Touch
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            Send us a message and we'll get back to you soon
+                          </p>
                     </motion.div>
                       {/* Connect With Us - Social Links */}
-                      {wall?.social_links && Object.keys(wall.social_links).length > 0 && (
+                        {wall?.social_links &&
+                          Object.keys(wall.social_links).length > 0 && (
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
@@ -891,11 +1097,26 @@ const WallView = () => {
                           transition={{ duration: 0.5, delay: 0.3 }}
                         >
                           <div className="bg-transparent rounded-lg p-4 my-6">
-                            <h3 className="text-base font-semibold mb-3 text-center">Connect With Us</h3>
+                                <h3 className="text-base font-semibold mb-3 text-center">
+                                  Connect With Us
+                                </h3>
                             <div className="flex flex-wrap gap-2 justify-center">
-                              {(wall.social_links as { twitter?: string; linkedin?: string; instagram?: string; website?: string }).twitter && (
+                                  {(
+                                    wall.social_links as {
+                                      twitter?: string;
+                                      linkedin?: string;
+                                      instagram?: string;
+                                      website?: string;
+                                    }
+                                  ).twitter && (
                                 <motion.a
-                                  href={(wall.social_links as { twitter?: string }).twitter}
+                                      href={
+                                        (
+                                          wall.social_links as {
+                                            twitter?: string;
+                                          }
+                                        ).twitter
+                                      }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   whileHover={{ scale: 1.1 }}
@@ -908,9 +1129,16 @@ const WallView = () => {
                                   <div className="absolute inset-0 rounded-full bg-blue-400 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
                                 </motion.a>
                               )}
-                              {(wall.social_links as { linkedin?: string }).linkedin && (
+                                  {(wall.social_links as { linkedin?: string })
+                                    .linkedin && (
                                 <motion.a
-                                  href={(wall.social_links as { linkedin?: string }).linkedin}
+                                      href={
+                                        (
+                                          wall.social_links as {
+                                            linkedin?: string;
+                                          }
+                                        ).linkedin
+                                      }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   whileHover={{ scale: 1.1 }}
@@ -923,9 +1151,16 @@ const WallView = () => {
                                   <div className="absolute inset-0 rounded-full bg-blue-500 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
                                 </motion.a>
                               )}
-                              {(wall.social_links as { instagram?: string }).instagram && (
+                                  {(wall.social_links as { instagram?: string })
+                                    .instagram && (
                                 <motion.a
-                                  href={(wall.social_links as { instagram?: string }).instagram}
+                                      href={
+                                        (
+                                          wall.social_links as {
+                                            instagram?: string;
+                                          }
+                                        ).instagram
+                                      }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   whileHover={{ scale: 1.1 }}
@@ -938,9 +1173,16 @@ const WallView = () => {
                                   <div className="absolute inset-0 rounded-full bg-pink-500 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
                                 </motion.a>
                               )}
-                              {(wall.social_links as { website?: string }).website && (
+                                  {(wall.social_links as { website?: string })
+                                    .website && (
                                 <motion.a
-                                  href={(wall.social_links as { website?: string }).website}
+                                      href={
+                                        (
+                                          wall.social_links as {
+                                            website?: string;
+                                          }
+                                        ).website
+                                      }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   whileHover={{ scale: 1.1 }}
@@ -960,7 +1202,14 @@ const WallView = () => {
                       </div>
 
                       {/* Contact Form */}
-                      <div className={wall?.social_links && Object.keys(wall.social_links).length > 0 ? "" : "lg:col-span-2"}>
+                      <div
+                        className={
+                          wall?.social_links &&
+                          Object.keys(wall.social_links).length > 0
+                            ? ""
+                            : "lg:col-span-2"
+                        }
+                      >
                         <ContactForm wallOwnerEmail={wallOwner?.email} />
                       </div>
                     </div>
@@ -969,7 +1218,6 @@ const WallView = () => {
               </motion.div>
             </motion.div>
           </section>
-
         </div>
       </div>
     </div>
@@ -982,7 +1230,7 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -993,7 +1241,7 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
     try {
       // Here you would typically send the form data to your backend
       // For now, we'll just show a success message
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
       
       toast.success("Message sent successfully! We'll get back to you soon.");
       
@@ -1002,7 +1250,7 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         name: "",
         email: "",
         subject: "",
-        message: ""
+        message: "",
       });
     } catch (error) {
       toast.error("Failed to send message. Please try again.");
@@ -1019,7 +1267,10 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <Label htmlFor="contact-name" className="text-sm font-semibold mb-1.5 block">
+        <Label
+          htmlFor="contact-name"
+          className="text-sm font-semibold mb-1.5 block"
+        >
           Name *
         </Label>
         <Input
@@ -1039,7 +1290,10 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <Label htmlFor="contact-email" className="text-sm font-semibold mb-1.5 block">
+        <Label
+          htmlFor="contact-email"
+          className="text-sm font-semibold mb-1.5 block"
+        >
           Email *
         </Label>
         <Input
@@ -1059,7 +1313,10 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.5 }}
       >
-        <Label htmlFor="contact-subject" className="text-sm font-semibold mb-1.5 block">
+        <Label
+          htmlFor="contact-subject"
+          className="text-sm font-semibold mb-1.5 block"
+        >
           Subject *
         </Label>
         <Input
@@ -1067,7 +1324,9 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
           type="text"
           required
           value={formData.subject}
-          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, subject: e.target.value })
+          }
           placeholder="What's this about?"
           className="bg-background/50 border-primary/20 focus:border-primary/60 focus:ring-primary/20 transition-all duration-300"
         />
@@ -1079,7 +1338,10 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         viewport={{ once: true }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <Label htmlFor="contact-message" className="text-sm font-semibold mb-1.5 block">
+        <Label
+          htmlFor="contact-message"
+          className="text-sm font-semibold mb-1.5 block"
+        >
           Message *
         </Label>
         <Textarea
@@ -1087,7 +1349,9 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
           required
           rows={5}
           value={formData.message}
-          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, message: e.target.value })
+          }
           placeholder="Tell us more about your project or inquiry..."
           className="bg-background/50 border-primary/20 focus:border-primary/60 focus:ring-primary/20 transition-all duration-300 resize-none"
         />
@@ -1131,7 +1395,7 @@ const ProjectCreateDialog = ({
   wallId, 
   onSuccess, 
   open, 
-  onOpenChange 
+  onOpenChange,
 }: { 
   wallId: string; 
   onSuccess: () => void; 
@@ -1145,7 +1409,7 @@ const ProjectCreateDialog = ({
     media_type: "image" as "image" | "video",
     order_index: 0,
     showreel_type: "embed" as "embed" | "upload",
-    showreel_url: ""
+    showreel_url: "",
   });
   const [mediaPreview, setMediaPreview] = useState("");
   const [showreelFile, setShowreelFile] = useState<File | null>(null);
@@ -1159,8 +1423,10 @@ const ProjectCreateDialog = ({
     const maxSizeMB = 50;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      toast.error(`Media file is too large. Maximum file size is ${maxSizeMB}MB.`);
-      e.target.value = '';
+      toast.error(
+        `Media file is too large. Maximum file size is ${maxSizeMB}MB.`
+      );
+      e.target.value = "";
       return;
     }
 
@@ -1169,7 +1435,7 @@ const ProjectCreateDialog = ({
       setMediaPreview(reader.result as string);
     };
     reader.onerror = () => {
-      toast.error('Failed to read media file');
+      toast.error("Failed to read media file");
     };
     reader.readAsDataURL(file);
   };
@@ -1194,7 +1460,9 @@ const ProjectCreateDialog = ({
         const maxSizeMB = 50;
         const maxSizeBytes = maxSizeMB * 1024 * 1024;
         if (showreelFile.size > maxSizeBytes) {
-          toast.error(`Showreel video is too large. Maximum file size is ${maxSizeMB}MB.`);
+          toast.error(
+            `Showreel video is too large. Maximum file size is ${maxSizeMB}MB.`
+          );
           setSubmitting(false);
           return;
         }
@@ -1206,18 +1474,19 @@ const ProjectCreateDialog = ({
               if (reader.result) {
                 resolve(reader.result as string);
               } else {
-                reject(new Error('Failed to read video file'));
+                reject(new Error("Failed to read video file"));
               }
             };
             reader.onerror = () => {
-              reject(new Error('Failed to read video file'));
+              reject(new Error("Failed to read video file"));
             };
             reader.readAsDataURL(showreelFile);
           });
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error 
+          const errorMessage =
+            error instanceof Error
             ? error.message 
-            : 'Failed to convert video to base64';
+              : "Failed to convert video to base64";
           toast.error(errorMessage);
           setSubmitting(false);
           return;
@@ -1233,7 +1502,7 @@ const ProjectCreateDialog = ({
         media_type: formData.media_type,
         order_index: formData.order_index || 0,
         showreel_url: showreelUrl || undefined,
-        showreel_type: showreelUrl ? formData.showreel_type : undefined
+        showreel_type: showreelUrl ? formData.showreel_type : undefined,
       });
 
       toast.success("Project created successfully!");
@@ -1246,16 +1515,18 @@ const ProjectCreateDialog = ({
         media_type: "image",
         order_index: 0,
         showreel_type: "embed",
-        showreel_url: ""
+        showreel_url: "",
       });
       setMediaPreview("");
       setShowreelFile(null);
       
       onSuccess();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
+      const errorMessage =
+        error instanceof Error
         ? error.message 
-        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to create project";
+          : (error as { response?: { data?: { error?: string } } })?.response
+              ?.data?.error || "Failed to create project";
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -1279,7 +1550,9 @@ const ProjectCreateDialog = ({
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
               placeholder="Enter project title"
               required
               className="mt-2"
@@ -1291,7 +1564,9 @@ const ProjectCreateDialog = ({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               placeholder="Describe your project..."
               rows={4}
               className="mt-2"
@@ -1303,7 +1578,9 @@ const ProjectCreateDialog = ({
             <Input
               id="category"
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
               placeholder="e.g., Creature FX, Destruction FX, Character Animation"
               className="mt-2"
             />
@@ -1313,7 +1590,9 @@ const ProjectCreateDialog = ({
             <Label htmlFor="media_type">Media Type</Label>
             <Select
               value={formData.media_type}
-              onValueChange={(value: "image" | "video") => setFormData({ ...formData, media_type: value })}
+                onValueChange={(value: "image" | "video") =>
+                  setFormData({ ...formData, media_type: value })
+                }
             >
               <SelectTrigger className="mt-2">
                 <SelectValue />
@@ -1337,9 +1616,17 @@ const ProjectCreateDialog = ({
             {mediaPreview && (
               <div className="mt-4">
                 {formData.media_type === "video" ? (
-                  <video src={mediaPreview} className="max-h-48 rounded-lg" controls />
-                ) : (
-                  <img src={mediaPreview} alt="Preview" className="max-h-48 rounded-lg object-cover" />
+                    <video
+                      src={mediaPreview}
+                      className="max-h-48 rounded-lg"
+                      controls
+                    />
+                  ) : (
+                    <img
+                      src={mediaPreview}
+                      alt="Preview"
+                      className="max-h-48 rounded-lg object-cover"
+                    />
                 )}
               </div>
             )}
@@ -1351,7 +1638,12 @@ const ProjectCreateDialog = ({
               id="order_index"
               type="number"
               value={formData.order_index}
-              onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    order_index: parseInt(e.target.value) || 0,
+                  })
+                }
               placeholder="Display order (0 = first)"
               className="mt-2"
             />
@@ -1361,13 +1653,17 @@ const ProjectCreateDialog = ({
             <Label htmlFor="showreel_type">Showreel Type (Optional)</Label>
             <Select
               value={formData.showreel_type}
-              onValueChange={(value: "embed" | "upload") => setFormData({ ...formData, showreel_type: value })}
+                onValueChange={(value: "embed" | "upload") =>
+                  setFormData({ ...formData, showreel_type: value })
+                }
             >
               <SelectTrigger className="mt-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="embed">Embed URL (YouTube/Vimeo)</SelectItem>
+                  <SelectItem value="embed">
+                    Embed URL (YouTube/Vimeo)
+                  </SelectItem>
                 <SelectItem value="upload">Upload Video</SelectItem>
               </SelectContent>
             </Select>
@@ -1380,7 +1676,9 @@ const ProjectCreateDialog = ({
                 id="showreel_url"
                 type="url"
                 value={formData.showreel_url}
-                onChange={(e) => setFormData({ ...formData, showreel_url: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, showreel_url: e.target.value })
+                  }
                 placeholder="https://youtube.com/embed/..."
                 className="mt-2"
               />
@@ -1437,7 +1735,7 @@ const ProjectEditDialog = ({
   project, 
   onSuccess, 
   open, 
-  onOpenChange 
+  onOpenChange,
 }: { 
   project: {
     _id: string;
@@ -1461,7 +1759,7 @@ const ProjectEditDialog = ({
     media_type: (project.media_type || "image") as "image" | "video",
     order_index: project.order_index || 0,
     showreel_type: (project.showreel_type || "embed") as "embed" | "upload",
-    showreel_url: project.showreel_url || ""
+    showreel_url: project.showreel_url || "",
   });
   const [mediaPreview, setMediaPreview] = useState(project.media_url || "");
   const [showreelFile, setShowreelFile] = useState<File | null>(null);
@@ -1477,7 +1775,7 @@ const ProjectEditDialog = ({
       media_type: (project.media_type || "image") as "image" | "video",
       order_index: project.order_index || 0,
       showreel_type: (project.showreel_type || "embed") as "embed" | "upload",
-      showreel_url: project.showreel_url || ""
+      showreel_url: project.showreel_url || "",
     });
     setMediaPreview(project.media_url || "");
     setShowreelFile(null);
@@ -1490,8 +1788,10 @@ const ProjectEditDialog = ({
     const maxSizeMB = 50;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      toast.error(`Media file is too large. Maximum file size is ${maxSizeMB}MB.`);
-      e.target.value = '';
+      toast.error(
+        `Media file is too large. Maximum file size is ${maxSizeMB}MB.`
+      );
+      e.target.value = "";
       return;
     }
 
@@ -1500,7 +1800,7 @@ const ProjectEditDialog = ({
       setMediaPreview(reader.result as string);
     };
     reader.onerror = () => {
-      toast.error('Failed to read media file');
+      toast.error("Failed to read media file");
     };
     reader.readAsDataURL(file);
   };
@@ -1525,7 +1825,9 @@ const ProjectEditDialog = ({
         const maxSizeMB = 50;
         const maxSizeBytes = maxSizeMB * 1024 * 1024;
         if (showreelFile.size > maxSizeBytes) {
-          toast.error(`Showreel video is too large. Maximum file size is ${maxSizeMB}MB.`);
+          toast.error(
+            `Showreel video is too large. Maximum file size is ${maxSizeMB}MB.`
+          );
           setSubmitting(false);
           return;
         }
@@ -1537,18 +1839,19 @@ const ProjectEditDialog = ({
               if (reader.result) {
                 resolve(reader.result as string);
               } else {
-                reject(new Error('Failed to read video file'));
+                reject(new Error("Failed to read video file"));
               }
             };
             reader.onerror = () => {
-              reject(new Error('Failed to read video file'));
+              reject(new Error("Failed to read video file"));
             };
             reader.readAsDataURL(showreelFile);
           });
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error 
+          const errorMessage =
+            error instanceof Error
             ? error.message 
-            : 'Failed to convert video to base64';
+              : "Failed to convert video to base64";
           toast.error(errorMessage);
           setSubmitting(false);
           return;
@@ -1565,16 +1868,18 @@ const ProjectEditDialog = ({
           media_type: formData.media_type,
           order_index: formData.order_index || 0,
           showreel_url: showreelUrl || undefined,
-          showreel_type: showreelUrl ? formData.showreel_type : undefined
-        }
+          showreel_type: showreelUrl ? formData.showreel_type : undefined,
+        },
       });
 
       toast.success("Project updated successfully!");
       onSuccess();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error 
+      const errorMessage =
+        error instanceof Error
         ? error.message 
-        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to update project";
+          : (error as { response?: { data?: { error?: string } } })?.response
+              ?.data?.error || "Failed to update project";
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -1593,7 +1898,9 @@ const ProjectEditDialog = ({
             <Input
               id="edit-title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               placeholder="Enter project title"
               required
               className="mt-2"
@@ -1605,7 +1912,9 @@ const ProjectEditDialog = ({
             <Textarea
               id="edit-description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Describe your project..."
               rows={4}
               className="mt-2"
@@ -1617,7 +1926,9 @@ const ProjectEditDialog = ({
             <Input
               id="edit-category"
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
               placeholder="e.g., Creature FX, Destruction FX, Character Animation"
               className="mt-2"
             />
@@ -1627,7 +1938,9 @@ const ProjectEditDialog = ({
             <Label htmlFor="edit-media_type">Media Type</Label>
             <Select
               value={formData.media_type}
-              onValueChange={(value: "image" | "video") => setFormData({ ...formData, media_type: value })}
+              onValueChange={(value: "image" | "video") =>
+                setFormData({ ...formData, media_type: value })
+              }
             >
               <SelectTrigger className="mt-2">
                 <SelectValue />
@@ -1640,7 +1953,9 @@ const ProjectEditDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="edit-media">Media File (leave empty to keep current)</Label>
+            <Label htmlFor="edit-media">
+              Media File (leave empty to keep current)
+            </Label>
             <Input
               id="edit-media"
               type="file"
@@ -1651,9 +1966,17 @@ const ProjectEditDialog = ({
             {mediaPreview && (
               <div className="mt-4">
                 {formData.media_type === "video" ? (
-                  <video src={mediaPreview} className="max-h-48 rounded-lg" controls />
+                  <video
+                    src={mediaPreview}
+                    className="max-h-48 rounded-lg"
+                    controls
+                  />
                 ) : (
-                  <img src={mediaPreview} alt="Preview" className="max-h-48 rounded-lg object-cover" />
+                  <img
+                    src={mediaPreview}
+                    alt="Preview"
+                    className="max-h-48 rounded-lg object-cover"
+                  />
                 )}
               </div>
             )}
@@ -1665,7 +1988,12 @@ const ProjectEditDialog = ({
               id="edit-order_index"
               type="number"
               value={formData.order_index}
-              onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  order_index: parseInt(e.target.value) || 0,
+                })
+              }
               placeholder="Display order (0 = first)"
               className="mt-2"
             />
@@ -1675,7 +2003,9 @@ const ProjectEditDialog = ({
             <Label htmlFor="edit-showreel_type">Showreel Type (Optional)</Label>
             <Select
               value={formData.showreel_type}
-              onValueChange={(value: "embed" | "upload") => setFormData({ ...formData, showreel_type: value })}
+              onValueChange={(value: "embed" | "upload") =>
+                setFormData({ ...formData, showreel_type: value })
+              }
             >
               <SelectTrigger className="mt-2">
                 <SelectValue />
@@ -1694,7 +2024,9 @@ const ProjectEditDialog = ({
                 id="edit-showreel_url"
                 type="url"
                 value={formData.showreel_url}
-                onChange={(e) => setFormData({ ...formData, showreel_url: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, showreel_url: e.target.value })
+                }
                 placeholder="https://youtube.com/embed/..."
                 className="mt-2"
               />
@@ -1703,7 +2035,9 @@ const ProjectEditDialog = ({
 
           {formData.showreel_type === "upload" && (
             <div>
-              <Label htmlFor="edit-showreel">Upload Showreel Video (leave empty to keep current)</Label>
+              <Label htmlFor="edit-showreel">
+                Upload Showreel Video (leave empty to keep current)
+              </Label>
               <Input
                 id="edit-showreel"
                 type="file"
@@ -1756,7 +2090,7 @@ const TeamMemberDialog = ({
   wallId, 
   onSuccess, 
   open, 
-  onOpenChange 
+  onOpenChange,
 }: { 
   teamMember: {
     _id: string;
@@ -1795,10 +2129,12 @@ const TeamMemberDialog = ({
       twitter: teamMember?.social_links?.twitter || "",
       instagram: teamMember?.social_links?.instagram || "",
       website: teamMember?.social_links?.website || "",
-      portfolio: teamMember?.social_links?.portfolio || ""
-    }
+      portfolio: teamMember?.social_links?.portfolio || "",
+    },
   });
-  const [avatarPreview, setAvatarPreview] = useState(teamMember?.avatar_url || "");
+  const [avatarPreview, setAvatarPreview] = useState(
+    teamMember?.avatar_url || ""
+  );
   const [submitting, setSubmitting] = useState(false);
   const createTeamMemberMutation = useCreateTeamMember();
   const updateTeamMemberMutation = useUpdateTeamMember();
@@ -1819,8 +2155,8 @@ const TeamMemberDialog = ({
             twitter: teamMember.social_links?.twitter || "",
             instagram: teamMember.social_links?.instagram || "",
             website: teamMember.social_links?.website || "",
-            portfolio: teamMember.social_links?.portfolio || ""
-          }
+            portfolio: teamMember.social_links?.portfolio || "",
+          },
         });
         setAvatarPreview(teamMember.avatar_url || "");
       } else {
@@ -1838,8 +2174,8 @@ const TeamMemberDialog = ({
             twitter: "",
             instagram: "",
             website: "",
-            portfolio: ""
-          }
+            portfolio: "",
+          },
         });
         setAvatarPreview("");
       }
@@ -1853,8 +2189,10 @@ const TeamMemberDialog = ({
     const maxSizeMB = 5;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      toast.error(`Avatar image is too large. Maximum file size is ${maxSizeMB}MB.`);
-      e.target.value = '';
+      toast.error(
+        `Avatar image is too large. Maximum file size is ${maxSizeMB}MB.`
+      );
+      e.target.value = "";
       return;
     }
 
@@ -1863,7 +2201,7 @@ const TeamMemberDialog = ({
       setAvatarPreview(reader.result as string);
     };
     reader.onerror = () => {
-      toast.error('Failed to read avatar image');
+      toast.error("Failed to read avatar image");
     };
     reader.readAsDataURL(file);
   };
@@ -1886,8 +2224,8 @@ const TeamMemberDialog = ({
     try {
       const skillsArray = formData.skills
         .split(",")
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
 
       const data: {
         wall_id: string;
@@ -1916,21 +2254,25 @@ const TeamMemberDialog = ({
         skills: skillsArray.length > 0 ? skillsArray : undefined,
         order_index: formData.order_index || 0,
         avatar_url: avatarPreview || undefined,
-        social_links: Object.keys(formData.social_links).some(
-          key => formData.social_links[key as keyof typeof formData.social_links]?.trim()
-        ) ? {
+        social_links: Object.keys(formData.social_links).some((key) =>
+          formData.social_links[
+            key as keyof typeof formData.social_links
+          ]?.trim()
+        )
+          ? {
           linkedin: formData.social_links.linkedin?.trim() || undefined,
           twitter: formData.social_links.twitter?.trim() || undefined,
           instagram: formData.social_links.instagram?.trim() || undefined,
           website: formData.social_links.website?.trim() || undefined,
           portfolio: formData.social_links.portfolio?.trim() || undefined,
-        } : undefined
+            }
+          : undefined,
       };
 
       if (isEdit) {
         await updateTeamMemberMutation.mutateAsync({
           id: teamMember._id,
-          data
+          data,
         });
         toast.success("Team member updated successfully!");
       } else {
@@ -1952,8 +2294,8 @@ const TeamMemberDialog = ({
           twitter: "",
           instagram: "",
           website: "",
-          portfolio: ""
-        }
+          portfolio: "",
+        },
       });
       setAvatarPreview("");
       
@@ -1961,9 +2303,12 @@ const TeamMemberDialog = ({
       onOpenChange(false);
     } catch (error: unknown) {
       console.error("Team member error:", error);
-      const errorMessage = error instanceof Error 
+      const errorMessage =
+        error instanceof Error
         ? error.message 
-        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || `Failed to ${isEdit ? 'update' : 'create'} team member`;
+          : (error as { response?: { data?: { error?: string } } })?.response
+              ?.data?.error ||
+            `Failed to ${isEdit ? "update" : "create"} team member`;
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -1974,7 +2319,9 @@ const TeamMemberDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Team Member" : "Add Team Member"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Edit Team Member" : "Add Team Member"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -1982,7 +2329,9 @@ const TeamMemberDialog = ({
             <Input
               id="team-name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="Team member name"
               required
               className="mt-2"
@@ -1994,7 +2343,9 @@ const TeamMemberDialog = ({
             <Input
               id="team-role"
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
               placeholder="e.g., VFX Supervisor, Compositor, 3D Artist"
               required
               className="mt-2"
@@ -2006,7 +2357,9 @@ const TeamMemberDialog = ({
             <Textarea
               id="team-bio"
               value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, bio: e.target.value })
+              }
               placeholder="Brief description about the team member..."
               rows={3}
               className="mt-2"
@@ -2020,7 +2373,9 @@ const TeamMemberDialog = ({
                 id="team-email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="team@example.com"
                 className="mt-2"
               />
@@ -2032,7 +2387,12 @@ const TeamMemberDialog = ({
                 type="number"
                 min="0"
                 value={formData.experience_years}
-                onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    experience_years: parseInt(e.target.value) || 0,
+                  })
+                }
                 placeholder="0"
                 className="mt-2"
               />
@@ -2044,7 +2404,9 @@ const TeamMemberDialog = ({
             <Input
               id="team-skills"
               value={formData.skills}
-              onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, skills: e.target.value })
+              }
               placeholder="e.g., Compositing, 3D Modeling, Animation, VFX"
               className="mt-2"
             />
@@ -2061,7 +2423,11 @@ const TeamMemberDialog = ({
             />
             {avatarPreview && (
               <div className="mt-4">
-                <img src={avatarPreview} alt="Avatar preview" className="w-24 h-24 rounded-full object-cover border-2" />
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="w-24 h-24 rounded-full object-cover border-2"
+                />
               </div>
             )}
           </div>
@@ -2070,71 +2436,106 @@ const TeamMemberDialog = ({
             <Label>Social Links</Label>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div>
-                <Label htmlFor="team-linkedin" className="text-xs">LinkedIn</Label>
+                <Label htmlFor="team-linkedin" className="text-xs">
+                  LinkedIn
+                </Label>
                 <Input
                   id="team-linkedin"
                   type="url"
                   value={formData.social_links.linkedin}
-                  onChange={(e) => setFormData({
+                  onChange={(e) =>
+                    setFormData({
                     ...formData,
-                    social_links: { ...formData.social_links, linkedin: e.target.value }
-                  })}
+                      social_links: {
+                        ...formData.social_links,
+                        linkedin: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="https://linkedin.com/in/..."
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="team-twitter" className="text-xs">Twitter</Label>
+                <Label htmlFor="team-twitter" className="text-xs">
+                  Twitter
+                </Label>
                 <Input
                   id="team-twitter"
                   type="url"
                   value={formData.social_links.twitter}
-                  onChange={(e) => setFormData({
+                  onChange={(e) =>
+                    setFormData({
                     ...formData,
-                    social_links: { ...formData.social_links, twitter: e.target.value }
-                  })}
+                      social_links: {
+                        ...formData.social_links,
+                        twitter: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="https://twitter.com/..."
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="team-instagram" className="text-xs">Instagram</Label>
+                <Label htmlFor="team-instagram" className="text-xs">
+                  Instagram
+                </Label>
                 <Input
                   id="team-instagram"
                   type="url"
                   value={formData.social_links.instagram}
-                  onChange={(e) => setFormData({
+                  onChange={(e) =>
+                    setFormData({
                     ...formData,
-                    social_links: { ...formData.social_links, instagram: e.target.value }
-                  })}
+                      social_links: {
+                        ...formData.social_links,
+                        instagram: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="https://instagram.com/..."
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="team-website" className="text-xs">Website</Label>
+                <Label htmlFor="team-website" className="text-xs">
+                  Website
+                </Label>
                 <Input
                   id="team-website"
                   type="url"
                   value={formData.social_links.website}
-                  onChange={(e) => setFormData({
+                  onChange={(e) =>
+                    setFormData({
                     ...formData,
-                    social_links: { ...formData.social_links, website: e.target.value }
-                  })}
+                      social_links: {
+                        ...formData.social_links,
+                        website: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="https://example.com"
                   className="mt-1"
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="team-portfolio" className="text-xs">Portfolio</Label>
+                <Label htmlFor="team-portfolio" className="text-xs">
+                  Portfolio
+                </Label>
                 <Input
                   id="team-portfolio"
                   type="url"
                   value={formData.social_links.portfolio}
-                  onChange={(e) => setFormData({
+                  onChange={(e) =>
+                    setFormData({
                     ...formData,
-                    social_links: { ...formData.social_links, portfolio: e.target.value }
-                  })}
+                      social_links: {
+                        ...formData.social_links,
+                        portfolio: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="https://portfolio.example.com"
                   className="mt-1"
                 />
@@ -2149,7 +2550,12 @@ const TeamMemberDialog = ({
               type="number"
               min="0"
               value={formData.order_index}
-              onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  order_index: parseInt(e.target.value) || 0,
+                })
+              }
               placeholder="0 (lower = first)"
               className="mt-2"
             />
@@ -2164,14 +2570,19 @@ const TeamMemberDialog = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || !formData.name || !formData.role}>
+            <Button
+              type="submit"
+              disabled={submitting || !formData.name || !formData.role}
+            >
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {isEdit ? "Updating..." : "Adding..."}
                 </>
+              ) : isEdit ? (
+                "Update Team Member"
               ) : (
-                isEdit ? "Update Team Member" : "Add Team Member"
+                "Add Team Member"
               )}
             </Button>
           </div>
@@ -2188,7 +2599,9 @@ const AwardsTimeline = ({ awards }: { awards: string[] }) => {
   // - "Oscar for Best Visual Effects - 2023"
   // - "2023: VES Award for Outstanding Compositing"
   // - "VES Award (2022)"
-  const parseAwards = (awardList: string[]): Array<{ year?: string; content: string }> => {
+  const parseAwards = (
+    awardList: string[]
+  ): Array<{ year?: string; content: string }> => {
     const awardItems: Array<{ year?: string; content: string }> = [];
     
     // Regex patterns
@@ -2239,106 +2652,37 @@ const AwardsTimeline = ({ awards }: { awards: string[] }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.6 }}
-      className="max-w-6xl mx-auto"
+      className="max-w-8xl mx-auto"
     >
-      <div className="flex gap-0 items-start mt-12 mb-12">
-        {/* Vertical Text Label */}
-        <div className="flex-shrink-0 flex items-start justify-start" style={{ 
-          width: '120px',
-          position: 'relative',
-          zIndex: 1,
-          alignSelf: 'flex-start'
-        }}>
-          <div 
-            className="text-vertical-outline-red text-4xl md:text-5xl lg:text-6xl"
-            style={{ 
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'center',
-              whiteSpace: 'nowrap',
-              height: 'fit-content',
-              width: 'fit-content',
-              position: 'absolute',
-              top: 130,
-              left: '-100%',
-              marginLeft: '-50px',
-            }}
-          >
-            {'AWARDS'.split('').map((letter, index) => (
-              <span key={index} className="letter inline-block">
-                {letter === ' ' ? '\u00A0' : letter}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Timeline Content */}
-        <div className="flex-1 relative pl-0">
-          {/* Vertical Timeline Line */}
-          <div className="absolute left-0 md:left-32 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/70 to-primary/40 rounded-full" />
-        
-        {/* Timeline Items */}
-        <div className="space-y-12">
+      {/* Awards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {timelineItems.map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="relative flex items-start gap-8"
-            >
-              {/* Timeline Dot */}
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 + 0.2 }}
-                className="absolute left-0 md:left-32 w-5 h-5 bg-primary rounded-full border-4 border-background shadow-lg transform -translate-x-1/2 z-10 flex items-center justify-center"
-              >
-                <Award className="w-3 h-3 text-background" />
-              </motion.div>
-              
-              {/* Year (Left Side) */}
-              {item.year ? (
-                <div className="w-28 md:w-32 flex-shrink-0 pt-1">
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.1 + 0.3 }}
-                    className="text-right"
-                  >
-                    <div className="bg-primary/10 border-2 border-primary/40 rounded-lg px-4 py-3 shadow-md hover:bg-primary/20 transition-colors">
-                      <span className="text-2xl md:text-3xl font-bold text-primary block">{item.year}</span>
-                    </div>
-                  </motion.div>
-                </div>
-              ) : (
-                <div className="w-28 md:w-32 flex-shrink-0" />
-              )}
-              
-              {/* Content (Right Side) */}
-              <div className="flex-1 pt-1">
-                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 + 0.4 }}
-                >
-                  <Card className="p-6 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-xl group">
-                    <div className="flex items-start gap-3">
-                      <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <p className="text-base md:text-lg leading-relaxed text-foreground font-medium">
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
+            <Card className="p-4 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-xl h-full">
+              <div className="flex items-start gap-3">
+                <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  {item.year && (
+                    <div className="mb-1">
+                      <span className="text-sm font-semibold text-primary">
+                        {item.year}
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-sm md:text-base leading-relaxed text-foreground font-medium">
                         {item.content}
                       </p>
+                </div>
                     </div>
                   </Card>
-                </motion.div>
-              </div>
             </motion.div>
           ))}
-        </div>
-        </div>
       </div>
     </motion.div>
   );
@@ -2351,8 +2695,10 @@ const JourneyTimeline = ({ content }: { content: string }) => {
   // - "2020: Founded the studio..."
   // - "2020 - Founded the studio..."
   // - Plain text (fallback)
-  const parseTimeline = (text: string): Array<{ year?: string; content: string }> => {
-    const lines = text.split('\n').filter(line => line.trim());
+  const parseTimeline = (
+    text: string
+  ): Array<{ year?: string; content: string }> => {
+    const lines = text.split("\n").filter((line) => line.trim());
     const timelineItems: Array<{ year?: string; content: string }> = [];
     
     // Regex to match year patterns: "2020:", "2020 -", "(2020)", etc.
@@ -2372,7 +2718,7 @@ const JourneyTimeline = ({ content }: { content: string }) => {
         if (currentContent.length > 0) {
           timelineItems.push({
             year: currentYear,
-            content: currentContent.join(' ').trim()
+            content: currentContent.join(" ").trim(),
           });
           currentContent = [];
         }
@@ -2383,7 +2729,9 @@ const JourneyTimeline = ({ content }: { content: string }) => {
         const yearInParens = trimmedLine.match(yearInParentheses);
         if (yearInParens && !currentYear) {
           currentYear = yearInParens[1];
-          currentContent.push(trimmedLine.replace(yearInParentheses, '').trim());
+          currentContent.push(
+            trimmedLine.replace(yearInParentheses, "").trim()
+          );
         } else {
           currentContent.push(trimmedLine);
         }
@@ -2394,12 +2742,15 @@ const JourneyTimeline = ({ content }: { content: string }) => {
     if (currentContent.length > 0) {
       timelineItems.push({
         year: currentYear,
-        content: currentContent.join(' ').trim()
+        content: currentContent.join(" ").trim(),
       });
     }
     
     // If no years found, treat as single paragraph
-    if (timelineItems.length === 0 || timelineItems.every(item => !item.year)) {
+    if (
+      timelineItems.length === 0 ||
+      timelineItems.every((item) => !item.year)
+    ) {
       return [{ content: text }];
     }
     
@@ -2422,30 +2773,33 @@ const JourneyTimeline = ({ content }: { content: string }) => {
     >
       <div className="flex gap-0 items-start mt-12 mb-12">
         {/* Vertical Text Label */}
-        <div className="flex-shrink-0 flex items-start justify-start" style={{ 
-          width: '120px',
-          minHeight: '65vh',
-          position: 'relative',
+        <div
+          className="flex-shrink-0 flex items-start justify-start"
+          style={{
+            width: "120px",
+            minHeight: "65vh",
+            position: "relative",
           zIndex: 1,
-          alignSelf: 'flex-start'
-        }}>
+            alignSelf: "flex-start",
+          }}
+        >
           <div 
             className="text-vertical-outline-red text-4xl md:text-5xl lg:text-6xl"
             style={{ 
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'center',
-              whiteSpace: 'nowrap',
-              height: 'fit-content',
-              width: 'fit-content',
-              position: 'absolute',
+              transform: "rotate(-90deg)",
+              transformOrigin: "center",
+              whiteSpace: "nowrap",
+              height: "fit-content",
+              width: "fit-content",
+              position: "absolute",
               top: 240,
-              left: '-100%',
-              marginLeft: '-160px',
+              left: "-100%",
+              marginLeft: "-160px",
             }}
           >
-            {'OUR JOURNEY'.split('').map((letter, index) => (
+            {"OUR JOURNEY".split("").map((letter, index) => (
               <span key={index} className="letter inline-block">
-                {letter === ' ' ? '\u00A0' : letter}
+                {letter === " " ? "\u00A0" : letter}
               </span>
             ))}
           </div>
@@ -2489,7 +2843,9 @@ const JourneyTimeline = ({ content }: { content: string }) => {
                     className="text-right"
                   >
                     <div className="bg-primary/10 border-2 border-primary/40 rounded-lg px-4 py-3 shadow-md hover:bg-primary/20 transition-colors">
-                      <span className="text-2xl md:text-3xl font-bold text-primary block">{item.year}</span>
+                        <span className="text-2xl md:text-3xl font-bold text-primary block">
+                          {item.year}
+                        </span>
                     </div>
                   </motion.div>
                 </div>
@@ -2518,6 +2874,199 @@ const JourneyTimeline = ({ content }: { content: string }) => {
         </div>
       </div>
     </motion.div>
+  );
+};
+
+// Team Member Details Dialog Component
+const TeamMemberDetailsDialog = ({
+  teamMember,
+  open,
+  onOpenChange,
+}: {
+  teamMember: {
+    _id: string;
+    name: string;
+    role: string;
+    bio?: string;
+    email?: string;
+    experience_years?: number;
+    skills?: string[];
+    avatar_url?: string;
+    social_links?: {
+      linkedin?: string;
+      twitter?: string;
+      instagram?: string;
+      website?: string;
+      portfolio?: string;
+    };
+    order_index?: number;
+  };
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">Team Member Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          {/* Avatar and Basic Info */}
+          <div className="flex flex-col items-center text-center space-y-4">
+            {teamMember.avatar_url ? (
+              <motion.img
+                src={teamMember.avatar_url}
+                alt={teamMember.name}
+                className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
+                <User className="h-16 w-16 text-primary/50" />
+              </div>
+            )}
+            <div className="space-y-2">
+              <h3 className="text-3xl font-bold">{teamMember.name}</h3>
+              <p className="text-lg text-primary font-semibold">
+                {teamMember.role}
+              </p>
+              {teamMember.experience_years && (
+                <p className="text-sm text-muted-foreground">
+                  {teamMember.experience_years}{" "}
+                  {teamMember.experience_years === 1 ? "year" : "years"} of
+                  experience
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Bio */}
+          {teamMember.bio && (
+            <div>
+              <h4 className="text-lg font-semibold mb-2">About</h4>
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                {teamMember.bio}
+              </p>
+            </div>
+          )}
+
+          {/* Skills */}
+          {teamMember.skills && teamMember.skills.length > 0 && (
+            <div>
+              <h4 className="text-lg font-semibold mb-3">Skills</h4>
+              <div className="flex flex-wrap gap-2">
+                {teamMember.skills.map((skill: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="px-4 py-2 bg-primary/10 text-primary text-sm rounded-full border border-primary/20 hover:bg-primary/20 transition-colors"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Contact Information */}
+          <div className="space-y-3">
+            <h4 className="text-lg font-semibold">Contact Information</h4>
+            {teamMember.email && (
+              <div className="flex items-center gap-3 p-3 bg-card border border-primary/20 rounded-lg">
+                <Mail className="h-5 w-5 text-primary" />
+                <a
+                  href={`mailto:${teamMember.email}`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  {teamMember.email}
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Social Links */}
+          {teamMember.social_links &&
+            Object.keys(teamMember.social_links).some(
+              (key) =>
+                teamMember.social_links?.[
+                  key as keyof typeof teamMember.social_links
+                ]
+            ) && (
+              <div>
+                <h4 className="text-lg font-semibold mb-3">Connect</h4>
+                <div className="flex flex-wrap gap-3">
+                  {teamMember.social_links.linkedin && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={teamMember.social_links.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Linkedin className="h-4 w-4" />
+                        LinkedIn
+                      </a>
+                    </Button>
+                  )}
+                  {teamMember.social_links.twitter && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={teamMember.social_links.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Twitter className="h-4 w-4" />
+                        Twitter
+                      </a>
+                    </Button>
+                  )}
+                  {teamMember.social_links.instagram && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={teamMember.social_links.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Instagram className="h-4 w-4" />
+                        Instagram
+                      </a>
+                    </Button>
+                  )}
+                  {teamMember.social_links.website && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={teamMember.social_links.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Website
+                      </a>
+                    </Button>
+                  )}
+                  {teamMember.social_links.portfolio && (
+                    <Button variant="outline" asChild>
+                      <a
+                        href={teamMember.social_links.portfolio}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Award className="h-4 w-4" />
+                        Portfolio
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
