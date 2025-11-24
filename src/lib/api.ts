@@ -1,5 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://195.35.7.60:5001/api';
 
+console.log("API_URL:", API_URL);
+
 let token: string | null = null;
 
 // Set token for authenticated requests
