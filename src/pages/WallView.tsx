@@ -235,12 +235,12 @@ const WallView = () => {
         profile._id?.toString() === wallOwner.toString()));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background mt-48">
       <Navbar user={user} profile={profile} />
 
       {/* Hero Section */}
       {wall?.hero_media_url && (
-        <div className="relative h-[50vh] overflow-hidden">
+        <div className="relative h-[50vh] overflow-hidden mt-[-190px]">
           <motion.img
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}

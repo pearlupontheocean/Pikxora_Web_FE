@@ -9,6 +9,34 @@ import { Button } from "@/components/ui/button";
 import { Search, MapPin, Star, Loader2 } from "lucide-react";
 import RatingStars from "@/components/RatingStars";
 
+interface WallUser {
+  _id?: string;
+  name?: string;
+  email?: string;
+  rating?: number;
+  location?: string;
+  associations?: string[];
+  user_id?: string;
+  roles?: string[];
+}
+
+interface Wall {
+  _id: string;
+  id?: string;
+  title?: string;
+  description?: string;
+  hero_media_url?: string;
+  user_id?: WallUser;
+}
+
+interface CurrentUserData {
+  user?: {
+    id: string;
+    email: string;
+    roles?: string[];
+  };
+}
+
 const Browse = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
@@ -18,10 +46,11 @@ const Browse = () => {
   const { data: profile } = useMyProfile();
   const { data: walls = [], isLoading: loading } = useWalls();
 
-  const user = currentUserData?.user;
+  const user = (currentUserData as CurrentUserData)?.user;
   const isLoading = loading || userLoading;
 
-  const filteredWalls = walls.filter((wall) => {
+  // Backend already filters out artist walls, so we just need to apply search filter
+  const filteredWalls = (walls as Wall[]).filter((wall) => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -32,7 +61,7 @@ const Browse = () => {
     );
   });
 
-  const sortedWalls = [...filteredWalls].sort((a, b) => {
+  const sortedWalls = [...filteredWalls].sort((a: Wall, b: Wall) => {
     const ratingA = a.user_id?.rating || 0;
     const ratingB = b.user_id?.rating || 0;
     return ratingB - ratingA;
