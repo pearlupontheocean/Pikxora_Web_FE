@@ -68,10 +68,18 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
-            <Button onClick={() => navigate("/profile/settings")}>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
+            <div className="flex gap-3">
+              {user?.roles?.includes('studio') || user?.roles?.includes('admin') ? (
+                <Button onClick={() => navigate("/jobs/create")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Post VFX Job
+                </Button>
+              ) : null}
+              <Button variant="outline" onClick={() => navigate("/profile/settings")}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </div>
           </div>
 
           {/* Verification Status */}
@@ -153,6 +161,40 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
+          {/* VFX Jobs Section */}
+          {(user?.roles?.includes('studio') || user?.roles?.includes('admin') || user?.roles?.includes('artist')) && (
+            <div>
+              <h2 className="text-2xl font-bold mb-6">VFX Jobs</h2>
+              <Card className="p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={() => navigate("/jobs")}
+                    className="flex-1"
+                    size="lg"
+                  >
+                    <Award className="h-4 w-4 mr-2" />
+                    Browse Jobs
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/studio/jobs")}
+                    variant="outline"
+                    className="flex-1"
+                    size="lg"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    My Jobs & Bids
+                  </Button>
+                </div>
+                <p className="text-muted-foreground text-sm mt-4">
+                  {user?.roles?.includes('studio') || user?.roles?.includes('admin')
+                    ? "Post VFX jobs and manage your projects"
+                    : "Browse available VFX jobs and submit bids"
+                  }
+                </p>
+              </Card>
+            </div>
+          )}
 
           {/* Admin Section */}
           {user?.roles?.includes("admin") && (

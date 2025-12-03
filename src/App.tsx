@@ -13,6 +13,10 @@ import WallCreate from "./pages/WallCreate";
 import WallEdit from "./pages/WallEdit";
 import AdminVerifications from "./pages/AdminVerifications";
 import ProfileSettings from "./pages/ProfileSettings";
+import JobCreatePage from "./pages/JobCreatePage";
+import JobsBrowsePage from "./pages/JobsBrowsePage";
+import JobDetailPage from "./pages/JobDetailPage";
+import StudioJobsDashboard from "./pages/StudioJobsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +38,10 @@ const App = () => (
             <Route path="/wall/:id/edit" element={<WallEdit />} />
             <Route path="/admin/verifications" element={<AdminVerifications />} />
             <Route path="/profile/settings" element={<ProfileSettings />} />
+            <Route path="/jobs" element={<JobsBrowsePage />} />
+            <Route path="/jobs/create" element={<JobCreatePage />} />
+            <Route path="/jobs/:id" element={<JobDetailPage />} />
+            <Route path="/studio/jobs" element={<StudioJobsDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>

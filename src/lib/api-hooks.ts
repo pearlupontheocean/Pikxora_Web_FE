@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from './axios';
+import { Job, JobFilters, JobCreateData, Bid, BidCreateData, BidStatusUpdate, ContractSummary } from '@/types/jobs';
 
 // Auth API hooks
 export const useCurrentUser = () => {
@@ -354,7 +355,7 @@ export const useUpdateTeamMember = () => {
 
 export const useDeleteTeamMember = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await axiosInstance.delete(`/team/${id}`);
@@ -363,5 +364,131 @@ export const useDeleteTeamMember = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
     },
+  });
+};
+
+// Jobs API hooks
+export const useJobs = (filters: JobFilters = {}) => {
+  return useQuery({
+    queryKey: ['jobs', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString());
+        }
+      });
+
+      const response = await axiosInstance.get(`/jobs?${params}`);
+      return response.data as Job[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useJob = (id: string) => {
+  return useQuery({
+    queryKey: ['job', id],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/jobs/${id}`);
+      return response.data as Job;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+};
+
+export const useCreateJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: JobCreateData) => {
+      const response = await axiosInstance.post('/jobs', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+};
+
+export const usePublishJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.put(`/jobs/${id}/publish`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['job'] });
+    },
+  });
+};
+
+export const useBidsForJob = (jobId: string) => {
+  return useQuery({
+    queryKey: ['bids', 'job', jobId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/bids/job/${jobId}`);
+      return response.data as Bid[];
+    },
+    enabled: !!jobId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+};
+
+export const useMyBids = () => {
+  return useQuery({
+    queryKey: ['bids', 'my'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/bids/my');
+      return response.data as Bid[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useCreateBid = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: BidCreateData) => {
+      const response = await axiosInstance.post('/bids', data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bids', 'job', data.bid.job_id] });
+      queryClient.invalidateQueries({ queryKey: ['bids', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['job', data.bid.job_id] });
+    },
+  });
+};
+
+export const useUpdateBidStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: BidStatusUpdate }) => {
+      const response = await axiosInstance.put(`/bids/${id}/status`, data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bids', 'job', data.bid.job_id] });
+      queryClient.invalidateQueries({ queryKey: ['bids', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['job', data.bid.job_id] });
+    },
+  });
+};
+
+export const useContracts = () => {
+  return useQuery({
+    queryKey: ['contracts'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/contracts');
+      return response.data as ContractSummary[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
