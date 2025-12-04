@@ -22,6 +22,7 @@ import heroGlobe from "@/assets/HeroSection/RRR.jpg";
 import studioFuture from "@/assets/HeroSection/Salaar.jpg";
 import aiNeural from "@/assets/HeroSection/bahubali.jpg";
 import aiNeural2 from "@/assets/ai-neural.jpg";
+import logo from "@/assets/LogoWhite.png"
 
 import artistCyber from "@/assets/HeroSection/dune.jpg";
 import eventFuture from "@/assets/HeroSection/interstellar.jpg";
@@ -227,15 +228,15 @@ const Index = () => {
         </div>
 
         {/* Floating Nav */}
-        <div className="absolute inset-x-0 top-0 z-20">
+        <div className="absolute inset-x-0 top-0 z-20 mt-[-100px]">
           <div className="container mx-auto max-w-7xl px-4 lg:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl border border-primary/40 bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                PX
-              </div>
-              <div className="text-left">
-                <p className="text-lg font-semibold tracking-widest text-foreground">PIKXORA</p>
-                <p className="text-xs text-muted-foreground uppercase tracking-[0.4em]">Studio Nexus</p>
+              <div className="relative  border-none">
+                <img
+                  src={logo}
+                  alt="Pikxora logo"
+                  className="h-80 md:h-82 w-100 object-cover bg-inherit"
+                />
               </div>
             </Link>
 
