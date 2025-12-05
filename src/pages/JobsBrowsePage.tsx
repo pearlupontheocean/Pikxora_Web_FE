@@ -14,16 +14,40 @@ import { type JobFilters, type Job } from '@/types/jobs';
 
 const JobsBrowsePage = () => {
   const navigate = useNavigate();
-  const { data: currentUser } = useCurrentUser();
-
-  console.log('🔍 JobsBrowsePage - currentUser:', currentUser);
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
 
   const [filters, setFilters] = useState<JobFilters>({
     status: 'open'
   });
 
-  const { data: jobs, isLoading, error, refetch } = useJobs(filters);
+  const { data: jobs, isLoading, error, refetch, isFetching } = useJobs(filters);
 
+  // Check if user is authenticated
+  if (userLoading) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please Login</h1>
+          <p className="text-muted-foreground mb-4">
+            You need to be logged in to browse jobs.
+          </p>
+          <Button onClick={() => navigate('/auth')}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleFilterChange = (key: keyof JobFilters, value: any) => {
     setFilters(prev => ({
@@ -65,12 +89,16 @@ const JobsBrowsePage = () => {
   };
 
   if (error) {
+    console.error('❌ Jobs API Error:', error);
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Failed to load jobs</h1>
           <p className="text-muted-foreground mb-4">
-            There was an error loading the jobs. Please try again.
+            Error: {error?.message || 'Unknown error'}
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Check the browser console for more details.
           </p>
           <Button onClick={() => refetch()}>
             Try Again
@@ -90,8 +118,8 @@ const JobsBrowsePage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1">
+        {/* Filters Sidebar - NO SCROLLBAR, fixed content */}
+        <div className="lg:col-span-1 lg:max-h-[calc(100vh-10rem)] pr-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -163,8 +191,8 @@ const JobsBrowsePage = () => {
           </Card>
         </div>
 
-        {/* Jobs List */}
-        <div className="lg:col-span-3">
+        {/* Jobs List - SCROLLBAR ONLY HERE */}
+        <div className="lg:col-span-3 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -190,7 +218,7 @@ const JobsBrowsePage = () => {
                   <CardContent className="p-8 text-center">
                     <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground mb-2">
                       Try adjusting your filters or check back later for new opportunities.
                     </p>
                   </CardContent>
