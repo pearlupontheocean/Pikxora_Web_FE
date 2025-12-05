@@ -32,6 +32,7 @@ export const jobCreateSchema = z.object({
   expected_start_date: z.string().optional(),
   final_delivery_date: z.string().min(1, 'Final delivery date is required'),
   notes_for_bidders: z.string().optional(),
+  status: z.enum(['draft', 'open', 'under_review', 'awarded', 'in_progress', 'completed', 'cancelled']).default('draft'),
 }).refine((data) => {
   // If assignment_mode is 'direct', assigned_to is required
   if (data.assignment_mode === 'direct' && !data.assigned_to) {
@@ -72,7 +73,9 @@ export const bidCreateSchema = z.object({
   estimated_duration_days: z.number().min(1).optional(),
   start_available_from: z.string().optional(),
   notes: z.string().optional(),
-  included_services: z.array(z.string()).optional(),
+  included_services: z.array(z.object({
+    value: z.string().min(1, 'Service description is required'),
+  })).optional(),
 }).refine((data) => {
   // If breakdown is provided, amounts should sum to total
   if (data.breakdown && data.breakdown.length > 0) {

@@ -5,6 +5,7 @@ export interface CurrentUser {
     id: string;
     email: string;
     roles: string[];
+    profile_picture?: string;
   };
   profile: {
     _id: string;
@@ -12,12 +13,28 @@ export interface CurrentUser {
     email: string;
     verification_status: string;
     rating?: number;
+    bio?: string;
+    location?: string;
+    avatar_url?: string;
+    tagline?: string;
+    brand_colors?: string[];
+    social_links?: {
+      linkedin?: string;
+      twitter?: string;
+      instagram?: string;
+      website?: string;
+      portfolio?: string;
+    };
+    skills?: string[];
+    wall_id?: string;
   };
 }
 
 export interface User {
   _id: string;
   email: string;
+  name?: string;
+  profile_picture?: string;
 }
 
 export interface Movie {

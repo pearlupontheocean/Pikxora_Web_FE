@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Save, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,44 +12,56 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { useCreateJob, usePublishJob } from '@/lib/api-hooks';
+import { useJob, useUpdateJob } from '@/lib/api-hooks';
 import { jobCreateSchema, type JobCreateFormData } from '@/lib/validations/jobs';
+import { type Job } from '@/types/jobs';
 
-const JobCreatePage = () => {
+const JobEditPage = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const createJobMutation = useCreateJob();
-  const publishJobMutation = usePublishJob();
 
-  const [workType, setWorkType] = useState<string>('');
+  // Define allowed status transitions
+  const getAllowedStatuses = (currentStatus: string) => {
+    const transitions: Record<string, string[]> = {
+      'draft': ['open', 'cancelled'],
+      'open': ['under_review', 'cancelled'],
+      'under_review': ['awarded', 'open', 'cancelled'],
+      'awarded': ['in_progress', 'cancelled'],
+      'in_progress': ['completed', 'cancelled'],
+      'completed': [],
+      'cancelled': []
+    };
+    return transitions[currentStatus] || [];
+  };
+
+  const { data: job, isLoading: jobLoading, error: jobError } = useJob(id!);
+  const updateJobMutation = useUpdateJob();
 
   const {
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
+    watch,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm<JobCreateFormData>({
-    resolver: zodResolver(jobCreateSchema),
-    defaultValues: {
-      currency: 'INR',
-      assignment_mode: 'open',
-      payment_type: 'fixed',
-      required_skills: [],
-      software_preferences: [],
-      deliverables: [],
-      shot_breakdown: []
-    }
+    resolver: zodResolver(jobCreateSchema)
   });
 
   const assignmentMode = watch('assignment_mode');
+  const currentStatus = useWatch({ control, name: 'status' });
+
+  console.log('JobEditPage - Render: jobLoading', jobLoading, 'job?.assignment_mode:', job?.assignment_mode, 'assignmentMode (watched):', assignmentMode);
 
   const {
     fields: shotFields,
     append: appendShot,
-    remove: removeShot
-  } = useFieldArray({
+    remove: removeShot,
+    replace: replaceShots
+  } = useFieldArray<JobCreateFormData, 'shot_breakdown'>({ // Explicitly type for shot_breakdown
     control,
     name: 'shot_breakdown'
   });
@@ -57,59 +69,154 @@ const JobCreatePage = () => {
   const {
     fields: deliverableFields,
     append: appendDeliverable,
-    remove: removeDeliverable
-  } = useFieldArray({
+    remove: removeDeliverable,
+    replace: replaceDeliverables
+  } = useFieldArray<JobCreateFormData, 'deliverables'>({ // Explicitly type for deliverables
     control,
     name: 'deliverables'
   });
 
+  // Populate form when job data loads
+  useEffect(() => {
+    if (job) {
+      reset({
+        title: job.title,
+        description: job.description,
+        movie_id: job.movie_id?._id || '',
+        assignment_mode: job.assignment_mode,
+        assigned_to: job.assigned_to?._id || '',
+        payment_type: job.payment_type,
+        currency: job.currency,
+        min_budget: job.min_budget,
+        max_budget: job.max_budget,
+        total_shots: job.total_shots,
+        total_frames: job.total_frames,
+        resolution: job.resolution,
+        frame_rate: job.frame_rate,
+        required_skills: job.required_skills ? [job.required_skills.join(', ')] : [''],
+        software_preferences: job.software_preferences ? [job.software_preferences.join(', ')] : [''],
+        bid_deadline: job.bid_deadline ? new Date(job.bid_deadline).toISOString().slice(0, 10) : '',
+        expected_start_date: job.expected_start_date ? new Date(job.expected_start_date).toISOString().slice(0, 10) : '',
+        final_delivery_date: job.final_delivery_date ? new Date(job.final_delivery_date).toISOString().slice(0, 10) : '',
+        notes_for_bidders: job.notes_for_bidders,
+        status: job.status
+      });
+
+      // Handle arrays
+      replaceShots(job.shot_breakdown || []);
+      replaceDeliverables(job.deliverables || []);
+    }
+  }, [job, reset, replaceShots, replaceDeliverables]);
+
   const onSubmit = async (data: JobCreateFormData) => {
     try {
-      // Convert comma-separated strings to arrays
-      const processedData = {
+      // Convert comma-separated strings to arrays and filter out empty values
+      const processedData: any = {
         ...data,
-        required_skills: data.required_skills?.length
-          ? data.required_skills[0]?.split(',').map(s => s.trim()).filter(Boolean)
+        required_skills: data.required_skills?.[0]
+          ? data.required_skills[0].split(',').map(s => s.trim()).filter(Boolean)
           : [],
-        software_preferences: data.software_preferences?.length
-          ? data.software_preferences[0]?.split(',').map(s => s.trim()).filter(Boolean)
+        software_preferences: data.software_preferences?.[0]
+          ? data.software_preferences[0].split(',').map(s => s.trim()).filter(Boolean)
           : []
       };
 
-      const result = await createJobMutation.mutateAsync(processedData);
-
-      // Auto-publish jobs that are ready
-      const shouldAutoPublish =
-        result.job.assignment_mode === 'open' && result.job.bid_deadline;
-
-      if (shouldAutoPublish) {
-        try {
-          await publishJobMutation.mutateAsync(result.job._id);
-          toast.success('Job created and published successfully!');
-        } catch (publishError) {
-          console.warn('Job created but failed to auto-publish:', publishError);
-          toast.success('Job created successfully! You can publish it from the job details.');
+      // Remove empty/undefined ObjectId fields to prevent casting errors
+      const finalData: any = {};
+      Object.keys(processedData).forEach(key => {
+        const value = processedData[key];
+        // Skip empty strings for ObjectId fields
+        if ((key === 'movie_id' || key === 'assigned_to') && (value === '' || value === undefined)) {
+          return;
         }
-      } else {
-        toast.success('Job created successfully!');
+        // Include all other values
+        finalData[key] = value;
+      });
+
+      // Ensure status is included
+      if (processedData.status) {
+        finalData.status = processedData.status;
       }
 
-      navigate(`/jobs/${result.job._id}`);
+      console.log('🔍 JobEditPage - Original form data:', data);
+      console.log('🔍 JobEditPage - Processed data:', processedData);
+      console.log('🔍 JobEditPage - Final data being sent:', finalData);
+      console.log('🔍 JobEditPage - Status field:', finalData.status);
+
+      await updateJobMutation.mutateAsync({
+        id: id!,
+        data: finalData
+      });
+
+      toast.success('Job updated successfully!');
+      navigate(`/jobs/${id}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create job');
+      toast.error(error.response?.data?.error || 'Failed to update job');
     }
   };
+
+  if (jobLoading) {
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-32 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (jobError || !job) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Job not found</h1>
+          <p className="text-muted-foreground mb-4">
+            The job you're trying to edit doesn't exist or you don't have permission.
+          </p>
+          <Button onClick={() => navigate('/jobs')}>
+            Back to Jobs
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create VFX Job</h1>
-        <p className="text-muted-foreground mt-2">
-          Post a new VFX job for studios and artists to bid on
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Edit Job</h1>
+            <p className="text-muted-foreground mt-2">
+              Update your job posting details
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/jobs/${id}`)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form className="space-y-8">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -140,48 +247,75 @@ const JobCreatePage = () => {
                 <p className="text-sm text-destructive mt-1">{errors.description.message}</p>
               )}
             </div>
-
-            <div>
-              <Label htmlFor="workType">Work Type</Label>
-              <Select value={workType} onValueChange={setWorkType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select work type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vfx">VFX</SelectItem>
-                  <SelectItem value="animation">Animation</SelectItem>
-                  <SelectItem value="motion_graphics">Motion Graphics</SelectItem>
-                  <SelectItem value="compositing">Compositing</SelectItem>
-                  <SelectItem value="modeling">3D Modeling</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </CardContent>
         </Card>
 
         {/* Assignment Mode */}
         <Card>
           <CardHeader>
-            <CardTitle>Assignment</CardTitle>
+            <CardTitle>Assignment & Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="assignment_mode">Assignment Mode *</Label>
-              <Select
-                value={assignmentMode}
-                onValueChange={(value) => setValue('assignment_mode', value as 'direct' | 'open')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select assignment mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Open for Bidding</SelectItem>
-                  <SelectItem value="direct">Direct Assignment</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.assignment_mode && (
-                <p className="text-sm text-destructive mt-1">{errors.assignment_mode.message}</p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="assignment_mode">Assignment Mode *</Label>
+                <Select
+                  value={assignmentMode}
+                  onValueChange={(value) => setValue('assignment_mode', value as 'direct' | 'open')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select assignment mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open for Bidding</SelectItem>
+                    <SelectItem value="direct">Direct Assignment</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.assignment_mode && (
+                  <p className="text-sm text-destructive mt-1">{errors.assignment_mode.message}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="status">Job Status *</Label>
+                <Controller
+                  name="status"
+                  control={control}
+                  defaultValue={job?.status || 'draft'}
+                  render={({ field }) => {
+                    console.log('🔍 Status Controller field value:', field.value);
+                    return (
+                      <Select value={field.value} onValueChange={(value) => {
+                        console.log('🔍 Status onChange called with:', value);
+                        field.onChange(value);
+                      }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAllowedStatuses(field.value || job?.status || 'draft').map(status => (
+                          <SelectItem key={status} value={status}>
+                            {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {status === 'open' && field.value === 'draft' && ' (Publish Job)'}
+                          </SelectItem>
+                        ))}
+                        {/* Always include current status */}
+                        {!getAllowedStatuses(field.value || job?.status || 'draft').includes(field.value || job?.status || 'draft') && (
+                          <SelectItem value={field.value || job?.status || 'draft'}>
+                            {(field.value || job?.status || 'draft').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    );
+                  }}
+                />
+                {currentStatus === 'draft' && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Change to "Open" to publish this job for bidding
+                  </p>
+                )}
+              </div>
             </div>
 
             {assignmentMode === 'direct' && (
@@ -484,7 +618,7 @@ const JobCreatePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {assignmentMode === 'open' && (
+              {(assignmentMode === 'open' || job?.assignment_mode === 'open') && (
                 <div>
                   <Label htmlFor="bid_deadline">Bid Deadline *</Label>
                   <Input
@@ -531,28 +665,9 @@ const JobCreatePage = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Separator />
-
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/jobs')}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Create Job
-          </Button>
-        </div>
       </form>
     </div>
   );
 };
 
-export default JobCreatePage;
+export default JobEditPage;

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from './axios';
-import { Job, JobFilters, JobCreateData, Bid, BidCreateData, BidStatusUpdate, ContractSummary } from '@/types/jobs';
+import { Job, JobFilters, JobCreateData, Bid, BidCreateData, BidStatusUpdate, ContractSummary, CurrentUser } from '@/types/jobs';
 
 // Auth API hooks
 export const useCurrentUser = () => {
@@ -22,7 +22,7 @@ export const useCurrentUser = () => {
     retry: false,
     refetchOnMount: true,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 0, // Don't cache
+    gcTime: 0, // Don't cache (renamed from cacheTime in RQ v5)
   });
 };
 
@@ -367,6 +367,18 @@ export const useDeleteTeamMember = () => {
   });
 };
 
+export const useUserProfile = (userId: string) => {
+  return useQuery<CurrentUser>({
+    queryKey: ['userProfile', userId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/profiles/user/${userId}`);
+      return response.data;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
 // Jobs API hooks
 export const useJobs = (filters: JobFilters = {}) => {
   return useQuery({
@@ -408,6 +420,23 @@ export const useCreateJob = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+};
+
+export const useUpdateJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<JobCreateData> }) => {
+      const response = await axiosInstance.put(`/jobs/${id}`, data);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['job', data.job._id] });
+      // Also refetch the specific job to ensure it's updated
+      queryClient.refetchQueries({ queryKey: ['job', data.job._id] });
     },
   });
 };

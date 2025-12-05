@@ -16,6 +16,7 @@ import ProfileSettings from "./pages/ProfileSettings";
 import JobCreatePage from "./pages/JobCreatePage";
 import JobsBrowsePage from "./pages/JobsBrowsePage";
 import JobDetailPage from "./pages/JobDetailPage";
+import JobEditPage from "./pages/JobEditPage";
 import StudioJobsDashboard from "./pages/StudioJobsDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/jobs" element={<JobsBrowsePage />} />
             <Route path="/jobs/create" element={<JobCreatePage />} />
             <Route path="/jobs/:id" element={<JobDetailPage />} />
+            <Route path="/jobs/:id/edit" element={<JobEditPage />} />
             <Route path="/studio/jobs" element={<StudioJobsDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
