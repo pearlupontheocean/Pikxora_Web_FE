@@ -118,16 +118,16 @@ const JobsBrowsePage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar - NO SCROLLBAR, fixed content */}
-        <div className="lg:col-span-1 lg:max-h-[calc(100vh-10rem)] pr-2">
-          <Card>
+        {/* Filters Sidebar - Fixed height, no scroll */}
+        <div className="lg:col-span-1 lg:h-[calc(100vh-10rem)] pr-2">
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="h-5 w-5" />
                 Filters
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-6">
               <div>
                 <label className="text-sm font-medium">Status</label>
                 <Select
@@ -191,115 +191,122 @@ const JobsBrowsePage = () => {
           </Card>
         </div>
 
-        {/* Jobs List - SCROLLBAR ONLY HERE */}
-        <div className="lg:col-span-3 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <div className="flex gap-4">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-16" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {jobs?.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
-                    <p className="text-muted-foreground mb-2">
-                      Try adjusting your filters or check back later for new opportunities.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                jobs?.map((job: Job) => (
-                  <Card
-                    key={job._id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => navigate(`/jobs/${job._id}`)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
-                          <p className="text-muted-foreground line-clamp-2">
-                            {job.description}
-                          </p>
+        {/* Jobs List - BOX with exact same height, scroll only inside */}
+        <div className="lg:col-span-3 lg:h-[calc(100vh-10rem)] pr-2">
+          <Card className="h-full">
+            <CardContent className="p-0 h-full flex flex-col">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold">Available Jobs</h3>
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent p-6 space-y-4">
+                {isLoading ? (
+                  <>
+                    {[...Array(2)].map((_, i) => (
+                      <Card key={i}>
+                        <CardContent className="p-6">
+                          <div className="space-y-3">
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <div className="flex gap-4">
+                              <Skeleton className="h-4 w-20" />
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-4 w-16" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
+                ) : jobs?.length === 0 ? (
+                  <div className="flex items-center justify-center h-full min-h-[400px]">
+                    <Card className="w-full max-w-md">
+                      <CardContent className="p-8 text-center">
+                        <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
+                        <p className="text-muted-foreground mb-2">
+                          Try adjusting your filters or check back later for new opportunities.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  jobs?.slice(0, 2).map((job: Job) => (
+                    <Card
+                      key={job._id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => navigate(`/jobs/${job._id}`)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
+                            <p className="text-muted-foreground line-clamp-2">
+                              {job.description}
+                            </p>
+                          </div>
+                          <Badge variant={getStatusBadgeVariant(job.status)}>
+                            {job.status.replace('_', ' ')}
+                          </Badge>
                         </div>
-                        <Badge variant={getStatusBadgeVariant(job.status)}>
-                          {job.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
 
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                        {job.total_shots && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {job.total_shots} shots
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                          {job.total_shots && (
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {job.total_shots} shots
+                            </div>
+                          )}
 
-                        {(job.min_budget || job.max_budget) && (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4" />
-                            {job.min_budget && job.max_budget
-                              ? `${formatCurrency(job.min_budget, job.currency)} - ${formatCurrency(job.max_budget, job.currency)}`
-                              : job.min_budget
-                                ? `From ${formatCurrency(job.min_budget, job.currency)}`
-                                : `Up to ${formatCurrency(job.max_budget!, job.currency)}`
-                            }
-                          </div>
-                        )}
+                          {(job.min_budget || job.max_budget) && (
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              {job.min_budget && job.max_budget
+                                ? `${formatCurrency(job.min_budget, job.currency)} - ${formatCurrency(job.max_budget, job.currency)}`
+                                : job.min_budget
+                                  ? `From ${formatCurrency(job.min_budget, job.currency)}`
+                                  : `Up to ${formatCurrency(job.max_budget!, job.currency)}`
+                              }
+                            </div>
+                          )}
 
-                        {job.bid_deadline && job.status === 'open' && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            Bids due {formatDate(job.bid_deadline)}
-                          </div>
-                        )}
+                          {job.bid_deadline && job.status === 'open' && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              Bids due {formatDate(job.bid_deadline)}
+                            </div>
+                          )}
 
-                        {job.final_delivery_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            Due {formatDate(job.final_delivery_date)}
-                          </div>
-                        )}
-                      </div>
+                          {job.final_delivery_date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              Due {formatDate(job.final_delivery_date)}
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {job.required_skills.slice(0, 3).map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {job.required_skills.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{job.required_skills.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {job.required_skills.slice(0, 3).map((skill, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {job.required_skills.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{job.required_skills.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
 
-                      <div className="text-sm text-muted-foreground">
-                        Posted by {job.created_by.email}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          )}
+                        <div className="text-sm text-muted-foreground">
+                          Posted by {job.created_by.email}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

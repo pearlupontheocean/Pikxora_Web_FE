@@ -134,6 +134,27 @@ export interface JobFilters {
   assigned_to_me?: boolean;
 }
 
+export interface DiscoverProfile {
+  _id: string;
+  name: string;
+  role: string;
+  location?: string;
+  verification_status: string;
+  wall_id?: string;
+  skills?: string[];
+  avatar_url?: string;
+}
+
+export interface Profile {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  location?: string;
+  wall_id?: string;
+  verification_status?: string;
+}
+
 export interface JobCreateData {
   title: string;
   description: string;

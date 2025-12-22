@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from './axios';
-import { Job, JobFilters, JobCreateData, Bid, BidCreateData, BidStatusUpdate, ContractSummary, CurrentUser } from '@/types/jobs';
+import { Job, JobFilters, JobCreateData, Bid, BidCreateData, BidStatusUpdate, ContractSummary, CurrentUser, Profile, DiscoverProfile } from '@/types/jobs';
 
 // Auth API hooks
 export const useCurrentUser = () => {
@@ -103,6 +103,17 @@ export const useMyProfile = () => {
       return response.data;
     },
     enabled: !!localStorage.getItem('token'),
+  });
+};
+
+export const useDiscoverProfiles = (limit: number = 6, excludeUserIds: string[] = []) => {
+  return useQuery<DiscoverProfile[]>({
+    queryKey: ['discoverProfiles', limit, excludeUserIds],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/profiles/discover', { params: { limit, excludeUserIds: excludeUserIds.join(',') } });
+      return res.data;
+    },
+    enabled: !!localStorage.getItem('token'), // Ensure user is authenticated to fetch discovered profiles
   });
 };
 
@@ -267,6 +278,29 @@ export const useUpdateProject = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
+  });
+};
+
+// Export getProjects for WallView
+export const useWallsByUser = (userId: string) => {
+  return useQuery({
+    queryKey: ['wallsByUser', userId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/walls/user/${userId}`);
+      return response.data;
+    },
+    enabled: !!userId, // Only fetch if userId is provided
+  });
+};
+
+export const useProjectsByUser = (userId: string) => {
+  return useQuery({
+    queryKey: ['projectsByUser', userId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/projects/user/${userId}`);
+      return response.data;
+    },
+    enabled: !!userId, // Only fetch if userId is provided
   });
 };
 
@@ -519,5 +553,112 @@ export const useContracts = () => {
       return response.data as ContractSummary[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+// Association hooks
+interface Association {
+  _id: string;
+  requester: {
+    _id: string;
+    name: string;
+    email: string;
+    roles: string[];
+    profile_picture?: string; // Add profile_picture
+    profile?: { // Add nested profile object
+      location?: string;
+      rating?: number;
+      wall_id?: string;
+      updatedAt?: string; // Add this
+    };
+    lastActivityTimestamp?: string; // Add this
+    lastActivityType?: string;      // Add this
+
+  };
+  recipient: {
+    _id: string;
+    name: string;
+    email: string;
+    roles: string[];
+    profile_picture?: string; // Add profile_picture
+    profile?: { // Add nested profile object
+      location?: string;
+      rating?: number;
+      wall_id?: string;
+      updatedAt?: string; // Add this
+    };
+    lastActivityTimestamp?: string; // Add this
+    lastActivityType?: string;      // Add this
+
+  };
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const useMyAssociations = () => {
+  return useQuery<Association[]>({
+    queryKey: ['myAssociations'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/associations/connected');
+      return response.data;
+    },
+    enabled: !!localStorage.getItem('token'),
+  });
+};
+
+export const usePendingAssociations = () => {
+  return useQuery<Association[]>({
+    queryKey: ['pendingAssociations'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/associations/pending');
+      return response.data;
+    },
+    enabled: !!localStorage.getItem('token'),
+  });
+};
+
+export const useSendAssociationRequest = (options?: any) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, string, unknown>({ // Explicitly define TData, TError, TVariables, TContext
+    mutationFn: async (recipientProfileId: string) => {
+      const response = await axiosInstance.post('/associations/request', { recipientProfileId });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingAssociations'] }); // Invalidate for recipient
+      queryClient.invalidateQueries({ queryKey: ['myAssociations'] }); // Also invalidate myAssociations
+    },
+    ...options,
+  });
+};
+
+export const useRespondToAssociation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: 'accept' | 'reject' }) => {
+      const response = await axiosInstance.put(`/associations/${action}/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingAssociations'] });
+      queryClient.invalidateQueries({ queryKey: ['myAssociations'] });
+    },
+  });
+};
+
+export const useRemoveAssociation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.delete(`/associations/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myAssociations'] });
+    },
   });
 };
