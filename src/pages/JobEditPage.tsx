@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 
-import { useJob, useUpdateJob } from '@/lib/api-hooks';
+import { useJob, useUpdateJob, useMyAssociations, useCurrentUser } from '@/lib/api-hooks';
 import { jobCreateSchema, type JobCreateFormData } from '@/lib/validations/jobs';
 import { type Job } from '@/types/jobs';
 
@@ -38,6 +39,9 @@ const JobEditPage = () => {
 
   const { data: job, isLoading: jobLoading, error: jobError } = useJob(id!);
   const updateJobMutation = useUpdateJob();
+  const { data: currentUserData } = useCurrentUser();
+  const { data: associations, isLoading: associationsLoading } = useMyAssociations();
+  const formInitializedRef = useRef(false);
 
   const {
     register,
@@ -48,11 +52,52 @@ const JobEditPage = () => {
     reset,
     formState: { errors, isSubmitting }
   } = useForm<JobCreateFormData>({
-    resolver: zodResolver(jobCreateSchema)
+    resolver: zodResolver(jobCreateSchema),
+    defaultValues: {
+      assigned_to: []
+    }
   });
 
   const assignmentMode = watch('assignment_mode');
   const currentStatus = useWatch({ control, name: 'status' });
+  const assignedToValue = useWatch({ control, name: 'assigned_to' }) || [];
+  const currentUserId = currentUserData?.user?.id;
+  const [assignedMembersState, setAssignedMembersState] = useState<string[]>([]);
+  
+  // Use job's assignment_mode directly if form hasn't been initialized yet
+  const effectiveAssignmentMode = assignmentMode || job?.assignment_mode || 'open';
+
+  // Extract association members (other users, not the current user)
+  const associationMembers = useMemo(() => {
+    if (!associations || !currentUserId) return [];
+
+    const membersMap = new Map<string, { id: string; name: string; email: string }>();
+
+    associations.forEach((association) => {
+      // Get the other user (not the current user)
+      const otherUser = 
+        association.requester._id === currentUserId 
+          ? association.recipient 
+          : association.requester;
+
+      // Use name if available, otherwise use email
+      const displayName = 
+        otherUser.name || 
+        otherUser.email || 
+        'Unknown User';
+
+      // Avoid duplicates
+      if (!membersMap.has(otherUser._id)) {
+        membersMap.set(otherUser._id, {
+          id: otherUser._id,
+          name: displayName,
+          email: otherUser.email || ''
+        });
+      }
+    });
+
+    return Array.from(membersMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [associations, currentUserId]);
 
   console.log('JobEditPage - Render: jobLoading', jobLoading, 'job?.assignment_mode:', job?.assignment_mode, 'assignmentMode (watched):', assignmentMode);
 
@@ -76,15 +121,65 @@ const JobEditPage = () => {
     name: 'deliverables'
   });
 
-  // Populate form when job data loads
+  // Extract assigned_to from job data whenever job changes - this runs FIRST to set state immediately
   useEffect(() => {
     if (job) {
-      reset({
+      let assignedToArray: string[] = [];
+      if (job.assigned_to) {
+        if (Array.isArray(job.assigned_to)) {
+          // If it's an array, extract IDs
+          assignedToArray = job.assigned_to.map((user: any) => {
+            if (typeof user === 'string') return user;
+            // Handle populated user object - check _id property
+            return user._id?.toString() || user.toString();
+          }).filter(Boolean);
+        } else {
+          // If it's a single user object, convert to array
+          const userId = typeof job.assigned_to === 'string' 
+            ? job.assigned_to 
+            : (job.assigned_to as any)?._id?.toString() || '';
+          if (userId) assignedToArray = [userId];
+        }
+      }
+      
+      // Update state immediately - this ensures UI updates right away, before form reset
+      setAssignedMembersState(assignedToArray);
+    } else {
+      setAssignedMembersState([]);
+    }
+  }, [job]);
+
+  // Populate form when job data loads
+  useEffect(() => {
+    if (job && !formInitializedRef.current) {
+      formInitializedRef.current = true;
+      
+      // Handle assigned_to as array (can be single user object or array of user objects)
+      let assignedToArray: string[] = [];
+      if (job.assigned_to) {
+        if (Array.isArray(job.assigned_to)) {
+          // If it's an array, extract IDs
+          assignedToArray = job.assigned_to.map((user: any) => {
+            if (typeof user === 'string') return user;
+            // Handle populated user object - check _id property
+            return user._id?.toString() || user.toString();
+          }).filter(Boolean);
+        } else {
+          // If it's a single user object, convert to array
+          const userId = typeof job.assigned_to === 'string' 
+            ? job.assigned_to 
+            : (job.assigned_to as any)?._id?.toString() || '';
+          if (userId) assignedToArray = [userId];
+        }
+      }
+
+
+      const formData = {
         title: job.title,
         description: job.description,
         movie_id: job.movie_id?._id || '',
         assignment_mode: job.assignment_mode,
-        assigned_to: job.assigned_to?._id || '',
+        assigned_to: assignedToArray,
         payment_type: job.payment_type,
         currency: job.currency,
         min_budget: job.min_budget,
@@ -100,13 +195,36 @@ const JobEditPage = () => {
         final_delivery_date: job.final_delivery_date ? new Date(job.final_delivery_date).toISOString().slice(0, 10) : '',
         notes_for_bidders: job.notes_for_bidders,
         status: job.status
+      };
+
+      reset(formData, {
+        keepDefaultValues: false,
+        keepValues: false
       });
 
       // Handle arrays
       replaceShots(job.shot_breakdown || []);
       replaceDeliverables(job.deliverables || []);
+
+      // Set the form values immediately after reset to ensure they're properly set
+      setValue('assignment_mode', job.assignment_mode, { 
+        shouldDirty: false, 
+        shouldValidate: false,
+        shouldTouch: false
+      });
+      
+      setValue('assigned_to', assignedToArray, { 
+        shouldDirty: false, 
+        shouldValidate: false,
+        shouldTouch: false
+      });
     }
-  }, [job, reset, replaceShots, replaceDeliverables]);
+  }, [job, reset, replaceShots, replaceDeliverables, setValue]);
+
+  // Reset the ref when job ID changes
+  useEffect(() => {
+    formInitializedRef.current = false;
+  }, [id]);
 
   const onSubmit = async (data: JobCreateFormData) => {
     try {
@@ -125,9 +243,20 @@ const JobEditPage = () => {
       const finalData: any = {};
       Object.keys(processedData).forEach(key => {
         const value = processedData[key];
-        // Skip empty strings for ObjectId fields
-        if ((key === 'movie_id' || key === 'assigned_to') && (value === '' || value === undefined)) {
+        // Skip empty strings for ObjectId fields (but allow arrays for assigned_to)
+        if (key === 'movie_id' && (value === '' || value === undefined)) {
           return;
+        }
+        // For assigned_to, handle arrays properly
+        if (key === 'assigned_to') {
+          if (Array.isArray(value) && value.length === 0) {
+            return; // Skip empty arrays
+          }
+          // Ensure it's an array
+          if (!Array.isArray(value) && value) {
+            finalData[key] = [value];
+            return;
+          }
         }
         // Include all other values
         finalData[key] = value;
@@ -148,7 +277,7 @@ const JobEditPage = () => {
         data: finalData
       });
 
-      toast.success('Job updated successfully!');
+      toast.success('project updated successfully!');
       navigate(`/jobs/${id}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to update job');
@@ -174,12 +303,12 @@ const JobEditPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Job not found</h1>
+          <h1 className="text-2xl font-bold mb-4">project not found</h1>
           <p className="text-muted-foreground mb-4">
             The job you're trying to edit doesn't exist or you don't have permission.
           </p>
           <Button onClick={() => navigate('/jobs')}>
-            Back to Jobs
+            Back to projects
           </Button>
         </div>
       </div>
@@ -191,7 +320,7 @@ const JobEditPage = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Edit Job</h1>
+            <h1 className="text-3xl font-bold">Edit project</h1>
             <p className="text-muted-foreground mt-2">
               Update your job posting details
             </p>
@@ -224,7 +353,7 @@ const JobEditPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="title">Job Title *</Label>
+              <Label htmlFor="title">project Title *</Label>
               <Input
                 id="title"
                 {...register('title')}
@@ -260,8 +389,15 @@ const JobEditPage = () => {
               <div>
                 <Label htmlFor="assignment_mode">Assignment Mode *</Label>
                 <Select
-                  value={assignmentMode}
-                  onValueChange={(value) => setValue('assignment_mode', value as 'direct' | 'open')}
+                  value={assignmentMode || job?.assignment_mode || ''}
+                  onValueChange={(value) => {
+                    setValue('assignment_mode', value as 'direct' | 'open');
+                    // Clear assigned_to when switching to open mode
+                    if (value === 'open') {
+                      setValue('assigned_to', []);
+                      setAssignedMembersState([]);
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select assignment mode" />
@@ -277,7 +413,7 @@ const JobEditPage = () => {
               </div>
 
               <div>
-                <Label htmlFor="status">Job Status *</Label>
+                <Label htmlFor="status">project Status *</Label>
                 <Controller
                   name="status"
                   control={control}
@@ -296,7 +432,7 @@ const JobEditPage = () => {
                         {getAllowedStatuses(field.value || job?.status || 'draft').map(status => (
                           <SelectItem key={status} value={status}>
                             {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            {status === 'open' && field.value === 'draft' && ' (Publish Job)'}
+                            {status === 'open' && field.value === 'draft' && ' (Publish project)'}
                           </SelectItem>
                         ))}
                         {/* Always include current status */}
@@ -318,16 +454,132 @@ const JobEditPage = () => {
               </div>
             </div>
 
-            {assignmentMode === 'direct' && (
+            {(effectiveAssignmentMode === 'direct' || job?.assignment_mode === 'direct') && job && !jobLoading && (
               <div>
-                <Label htmlFor="assigned_to">Assign to User ID *</Label>
-                <Input
-                  id="assigned_to"
-                  {...register('assigned_to')}
-                  placeholder="Enter user ID to assign directly"
-                />
+                <Label htmlFor="assigned_to">Assign to Association Members *</Label>
+                {associationsLoading ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-muted-foreground">Loading association members...</span>
+                  </div>
+                ) : associationMembers.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    No association members found. You need to have accepted associations to assign jobs directly.
+                  </div>
+                ) : (
+                  <div className="space-y-3 border rounded-md p-4 max-h-60 overflow-y-auto">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Checkbox
+                        id="select-all"
+                        checked={(() => {
+                          // Get current assigned list
+                          let current: string[] = [];
+                          if (assignedMembersState.length > 0) {
+                            current = assignedMembersState;
+                          } else if (Array.isArray(assignedToValue) && assignedToValue.length > 0) {
+                            current = assignedToValue;
+                          } else if (job?.assigned_to) {
+                            if (Array.isArray(job.assigned_to)) {
+                              current = job.assigned_to.map((user: any) => {
+                                if (typeof user === 'string') return user;
+                                return user._id?.toString() || '';
+                              }).filter(Boolean);
+                            } else {
+                              const userId = typeof job.assigned_to === 'string' 
+                                ? job.assigned_to 
+                                : (job.assigned_to as any)?._id?.toString() || '';
+                              if (userId) current = [userId];
+                            }
+                          }
+                          return current.length === associationMembers.length && associationMembers.length > 0;
+                        })()}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked ? associationMembers.map(m => m.id) : [];
+                          setValue('assigned_to', newValue, { shouldDirty: true });
+                          setAssignedMembersState(newValue);
+                        }}
+                      />
+                      <Label
+                        htmlFor="select-all"
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        Select All
+                      </Label>
+                    </div>
+                    <Separator />
+                    {associationMembers.map((member) => {
+                      // Determine which assigned list to use - prioritize state, then form value
+                      // Also check job data directly as a fallback for initial render
+                      let currentAssigned: string[] = [];
+                      if (assignedMembersState.length > 0) {
+                        currentAssigned = assignedMembersState;
+                      } else if (Array.isArray(assignedToValue) && assignedToValue.length > 0) {
+                        currentAssigned = assignedToValue;
+                      } else if (job?.assigned_to) {
+                        // Fallback to job data directly for initial render
+                        if (Array.isArray(job.assigned_to)) {
+                          currentAssigned = job.assigned_to.map((user: any) => {
+                            if (typeof user === 'string') return user;
+                            return user._id?.toString() || '';
+                          }).filter(Boolean);
+                        } else {
+                          const userId = typeof job.assigned_to === 'string' 
+                            ? job.assigned_to 
+                            : (job.assigned_to as any)?._id?.toString() || '';
+                          if (userId) currentAssigned = [userId];
+                        }
+                      }
+                      const isChecked = currentAssigned.includes(member.id);
+                      return (
+                        <div key={member.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`member-${member.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              // Get current value from state, form, or job data
+                              let current: string[] = [];
+                              if (assignedMembersState.length > 0) {
+                                current = assignedMembersState;
+                              } else if (Array.isArray(assignedToValue) && assignedToValue.length > 0) {
+                                current = assignedToValue;
+                              } else if (job?.assigned_to) {
+                                if (Array.isArray(job.assigned_to)) {
+                                  current = job.assigned_to.map((user: any) => {
+                                    if (typeof user === 'string') return user;
+                                    return user._id?.toString() || '';
+                                  }).filter(Boolean);
+                                } else {
+                                  const userId = typeof job.assigned_to === 'string' 
+                                    ? job.assigned_to 
+                                    : (job.assigned_to as any)?._id?.toString() || '';
+                                  if (userId) current = [userId];
+                                }
+                              }
+                              const newValue = checked 
+                                ? [...current, member.id]
+                                : current.filter(id => id !== member.id);
+                              setValue('assigned_to', newValue, { shouldDirty: true });
+                              setAssignedMembersState(newValue);
+                            }}
+                          />
+                          <Label
+                            htmlFor={`member-${member.id}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            {member.name} {member.email && <span className="text-muted-foreground">({member.email})</span>}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {errors.assigned_to && (
                   <p className="text-sm text-destructive mt-1">{errors.assigned_to.message}</p>
+                )}
+                {(assignedMembersState.length > 0 || (Array.isArray(assignedToValue) && assignedToValue.length > 0)) && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {(assignedMembersState.length > 0 ? assignedMembersState : assignedToValue).length} member{(assignedMembersState.length > 0 ? assignedMembersState : assignedToValue).length !== 1 ? 's' : ''} selected
+                  </p>
                 )}
               </div>
             )}
@@ -618,7 +870,7 @@ const JobEditPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(assignmentMode === 'open' || job?.assignment_mode === 'open') && (
+              {(effectiveAssignmentMode === 'open' || job?.assignment_mode === 'open') && (
                 <div>
                   <Label htmlFor="bid_deadline">Bid Deadline *</Label>
                   <Input

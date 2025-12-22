@@ -1,0 +1,6 @@
+import{c as l,j as a}from"./index-CSY5YgiJ.js";import{z as i}from"./proxy-BCkhZuQv.js";/**
+ * @license lucide-react v0.462.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const o=l("Star",[["path",{d:"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z",key:"r04s7s"}]]),n=({rating:r,showBadge:t=!1})=>{const s=e=>e===5?"PIKXORA Global Elite":e===4?"Premier Studio":e===3?"Verified Studio":"Approved Studio";return a.jsxs("div",{className:"flex items-center gap-2",children:[a.jsx("div",{className:"flex gap-0.5",children:[1,2,3,4,5].map(e=>a.jsx(i.div,{initial:{scale:0},animate:{scale:1},transition:{delay:e*.1},children:a.jsx(o,{className:`h-4 w-4 ${e<=r?"fill-primary text-primary drop-shadow-[0_0_8px_hsl(var(--red-glow))]":"fill-muted text-muted-foreground"}`})},e))}),t&&r>=3&&a.jsx("span",{className:"text-xs font-semibold text-primary red-glow",children:s(r)})]})};export{n as R};

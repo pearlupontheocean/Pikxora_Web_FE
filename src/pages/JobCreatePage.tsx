@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
@@ -12,14 +12,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 
-import { useCreateJob, usePublishJob } from '@/lib/api-hooks';
+import { useCreateJob, usePublishJob, useMyAssociations, useCurrentUser } from '@/lib/api-hooks';
 import { jobCreateSchema, type JobCreateFormData } from '@/lib/validations/jobs';
 
 const JobCreatePage = () => {
   const navigate = useNavigate();
   const createJobMutation = useCreateJob();
   const publishJobMutation = usePublishJob();
+  const { data: currentUserData } = useCurrentUser();
+  const { data: associations, isLoading: associationsLoading } = useMyAssociations();
 
   const [workType, setWorkType] = useState<string>('');
 
@@ -39,11 +42,45 @@ const JobCreatePage = () => {
       required_skills: [],
       software_preferences: [],
       deliverables: [],
-      shot_breakdown: []
+      shot_breakdown: [],
+      assigned_to: []
     }
   });
 
   const assignmentMode = watch('assignment_mode');
+  const currentUserId = currentUserData?.user?.id;
+
+  // Extract association members (other users, not the current user)
+  const associationMembers = useMemo(() => {
+    if (!associations || !currentUserId) return [];
+
+    const membersMap = new Map<string, { id: string; name: string; email: string }>();
+
+    associations.forEach((association) => {
+      // Get the other user (not the current user)
+      const otherUser = 
+        association.requester._id === currentUserId 
+          ? association.recipient 
+          : association.requester;
+
+      // Use name if available, otherwise use email
+      const displayName = 
+        otherUser.name || 
+        otherUser.email || 
+        'Unknown User';
+
+      // Avoid duplicates
+      if (!membersMap.has(otherUser._id)) {
+        membersMap.set(otherUser._id, {
+          id: otherUser._id,
+          name: displayName,
+          email: otherUser.email || ''
+        });
+      }
+    });
+
+    return Array.from(membersMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [associations, currentUserId]);
 
   const {
     fields: shotFields,
@@ -65,6 +102,8 @@ const JobCreatePage = () => {
 
   const onSubmit = async (data: JobCreateFormData) => {
     try {
+      console.log('Form data submitted:', data);
+      
       // Convert comma-separated strings to arrays
       const processedData = {
         ...data,
@@ -76,6 +115,7 @@ const JobCreatePage = () => {
           : []
       };
 
+      console.log('Processed data:', processedData);
       const result = await createJobMutation.mutateAsync(processedData);
 
       // Auto-publish jobs that are ready
@@ -85,18 +125,20 @@ const JobCreatePage = () => {
       if (shouldAutoPublish) {
         try {
           await publishJobMutation.mutateAsync(result.job._id);
-          toast.success('Job created and published successfully!');
+          toast.success('project created and published successfully!');
         } catch (publishError) {
-          console.warn('Job created but failed to auto-publish:', publishError);
-          toast.success('Job created successfully! You can publish it from the job details.');
+          console.warn('project created but failed to auto-publish:', publishError);
+          toast.success('project created successfully! You can publish it from the job details.');
         }
       } else {
-        toast.success('Job created successfully!');
+        toast.success('project created successfully!');
       }
 
       navigate(`/jobs/${result.job._id}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create job');
+      console.error('Error creating job:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to create job';
+      toast.error(errorMessage);
     }
   };
 
@@ -105,11 +147,20 @@ const JobCreatePage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Create VFX Job</h1>
         <p className="text-muted-foreground mt-2">
-          Post a new VFX job for studios and artists to bid on
+          Post a new VFX project for studios and artists to bid on
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit, (errors) => {
+        console.error('Form validation errors:', errors);
+        // Show first error to user
+        const firstError = Object.values(errors)[0];
+        if (firstError?.message) {
+          toast.error(firstError.message);
+        } else {
+          toast.error('Please fill in all required fields');
+        }
+      })} className="space-y-8">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -169,7 +220,13 @@ const JobCreatePage = () => {
               <Label htmlFor="assignment_mode">Assignment Mode *</Label>
               <Select
                 value={assignmentMode}
-                onValueChange={(value) => setValue('assignment_mode', value as 'direct' | 'open')}
+                onValueChange={(value) => {
+                  setValue('assignment_mode', value as 'direct' | 'open');
+                  // Clear assigned_to when switching to open mode
+                  if (value === 'open') {
+                    setValue('assigned_to', []);
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select assignment mode" />
@@ -186,14 +243,73 @@ const JobCreatePage = () => {
 
             {assignmentMode === 'direct' && (
               <div>
-                <Label htmlFor="assigned_to">Assign to User ID *</Label>
-                <Input
-                  id="assigned_to"
-                  {...register('assigned_to')}
-                  placeholder="Enter user ID to assign directly"
-                />
+                <Label htmlFor="assigned_to">Assign to Association Members *</Label>
+                {associationsLoading ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-muted-foreground">Loading association members...</span>
+                  </div>
+                ) : associationMembers.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-2">
+                    No association members found. You need to have accepted associations to assign jobs directly.
+                  </div>
+                ) : (
+                  <div className="space-y-3 border rounded-md p-4 max-h-60 overflow-y-auto">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Checkbox
+                        id="select-all"
+                        checked={watch('assigned_to')?.length === associationMembers.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setValue('assigned_to', associationMembers.map(m => m.id));
+                          } else {
+                            setValue('assigned_to', []);
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor="select-all"
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        Select All
+                      </Label>
+                    </div>
+                    <Separator />
+                    {associationMembers.map((member) => {
+                      const assignedTo = watch('assigned_to') || [];
+                      const isChecked = assignedTo.includes(member.id);
+                      return (
+                        <div key={member.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`member-${member.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              const current = watch('assigned_to') || [];
+                              if (checked) {
+                                setValue('assigned_to', [...current, member.id]);
+                              } else {
+                                setValue('assigned_to', current.filter(id => id !== member.id));
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`member-${member.id}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            {member.name} {member.email && <span className="text-muted-foreground">({member.email})</span>}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {errors.assigned_to && (
                   <p className="text-sm text-destructive mt-1">{errors.assigned_to.message}</p>
+                )}
+                {watch('assigned_to')?.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {watch('assigned_to')?.length} member{watch('assigned_to')?.length !== 1 ? 's' : ''} selected
+                  </p>
                 )}
               </div>
             )}
@@ -484,7 +600,7 @@ const JobCreatePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {assignmentMode === 'open' && (
+              {  (
                 <div>
                   <Label htmlFor="bid_deadline">Bid Deadline *</Label>
                   <Input
@@ -547,7 +663,7 @@ const JobCreatePage = () => {
             disabled={isSubmitting}
           >
             {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Create Job
+            Create project
           </Button>
         </div>
       </form>

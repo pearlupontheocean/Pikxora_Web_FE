@@ -58,7 +58,7 @@ export interface Job {
   description: string;
   movie_id?: Movie;
   assignment_mode: 'direct' | 'open';
-  assigned_to?: User;
+  assigned_to?: User | User[]; // Can be single user (backward compatibility) or array of users
   payment_type: 'fixed' | 'per_shot' | 'per_frame';
   currency: string;
   min_budget?: number;
@@ -160,7 +160,7 @@ export interface JobCreateData {
   description: string;
   movie_id?: string;
   assignment_mode: 'direct' | 'open';
-  assigned_to?: string;
+  assigned_to?: string | string[]; // Can be single user ID or array of user IDs
   payment_type: 'fixed' | 'per_shot' | 'per_frame';
   currency: string;
   min_budget?: number;

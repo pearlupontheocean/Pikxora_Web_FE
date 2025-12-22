@@ -16,6 +16,7 @@ const StudioJobsDashboard = () => {
   const navigate = useNavigate();
 
   const { data: postedJobs, isLoading: jobsLoading } = useJobs({ created_by_me: true });
+  const { data: assignedJobs, isLoading: assignedJobsLoading } = useJobs({ assigned_to_me: true });
   const { data: myBids, isLoading: bidsLoading } = useMyBids();
 
   const formatCurrency = (amount: number, currency: string = 'INR') => {
@@ -72,20 +73,21 @@ const StudioJobsDashboard = () => {
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Job Management</h1>
+          <h1 className="text-3xl font-bold">project Management</h1>
           <p className="text-muted-foreground mt-2">
-            Manage your posted jobs and track your bids
+            Manage your posted projects and track your bids
           </p>
         </div>
         <Button onClick={() => navigate('/jobs/create')}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Job
+          Create project
         </Button>
       </div>
 
       <Tabs defaultValue="posted" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="posted">Posted Jobs</TabsTrigger>
+          <TabsTrigger value="posted">Posted Projects</TabsTrigger>
+          <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
           <TabsTrigger value="bids">My Bids</TabsTrigger>
         </TabsList>
 
@@ -93,7 +95,7 @@ const StudioJobsDashboard = () => {
         <TabsContent value="posted" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Jobs You've Posted</CardTitle>
+              <CardTitle>Projects You've Posted</CardTitle>
             </CardHeader>
             <CardContent>
               {jobsLoading ? (
@@ -105,20 +107,20 @@ const StudioJobsDashboard = () => {
               ) : postedJobs?.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No jobs posted yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">No projects posted yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    Create your first VFX job to start receiving bids from talented artists and studios.
+                    Create your first VFX project to start receiving bids from talented artists and studios.
                   </p>
                   <Button onClick={() => navigate('/jobs/create')}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Job
+                    Create Your First project
                   </Button>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Job Title</TableHead>
+                      <TableHead>project Title</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Shots</TableHead>
                       <TableHead>Budget</TableHead>
@@ -128,6 +130,92 @@ const StudioJobsDashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {postedJobs?.map((job: Job) => (
+                      <TableRow key={job._id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{job.title}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {job.description}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getJobStatusBadgeVariant(job.status)}>
+                            {job.status.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{job.total_shots || '-'}</TableCell>
+                        <TableCell>
+                          {job.min_budget || job.max_budget ? (
+                            <div className="text-sm">
+                              {job.min_budget && job.max_budget
+                                ? `${formatCurrency(job.min_budget, job.currency)} - ${formatCurrency(job.max_budget, job.currency)}`
+                                : job.min_budget
+                                  ? `From ${formatCurrency(job.min_budget, job.currency)}`
+                                  : `Up to ${formatCurrency(job.max_budget!, job.currency)}`
+                              }
+                            </div>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {job.final_delivery_date ? formatDate(job.final_delivery_date) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/jobs/${job._id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Assigned to Me Tab */}
+        <TabsContent value="assigned" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Projects Assigned to Me</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {assignedJobsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : assignedJobs?.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No projects assigned to you yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Projects that are directly assigned to you will appear here.
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>project Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Shots</TableHead>
+                      <TableHead>Budget</TableHead>
+                      <TableHead>Deadline</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {assignedJobs?.map((job: Job) => (
                       <TableRow key={job._id}>
                         <TableCell>
                           <div>
@@ -197,17 +285,17 @@ const StudioJobsDashboard = () => {
                   <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No bids submitted yet</h3>
                   <p className="text-muted-foreground mb-4">
-                    Browse available jobs and submit competitive bids to win VFX projects.
+                    Browse available projects and submit competitive bids to win VFX projects.
                   </p>
                   <Button onClick={() => navigate('/jobs')}>
-                    Browse Jobs
+                    Browse projects
                   </Button>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Job Title</TableHead>
+                      <TableHead>project Title</TableHead>
                       <TableHead>Your Bid</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Submitted</TableHead>
@@ -253,7 +341,7 @@ const StudioJobsDashboard = () => {
                             onClick={() => navigate(`/jobs/${bid.job_id._id}`)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            View Job
+                            View project
                           </Button>
                         </TableCell>
                       </TableRow>

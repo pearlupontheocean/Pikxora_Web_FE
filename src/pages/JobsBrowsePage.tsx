@@ -39,7 +39,7 @@ const JobsBrowsePage = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Please Login</h1>
           <p className="text-muted-foreground mb-4">
-            You need to be logged in to browse jobs.
+            You need to be logged in to browse Projects.
           </p>
           <Button onClick={() => navigate('/auth')}>
             Go to Login
@@ -93,7 +93,7 @@ const JobsBrowsePage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Failed to load jobs</h1>
+          <h1 className="text-2xl font-bold mb-4">Failed to load projects</h1>
           <p className="text-muted-foreground mb-4">
             Error: {error?.message || 'Unknown error'}
           </p>
@@ -111,7 +111,7 @@ const JobsBrowsePage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">VFX Jobs</h1>
+        <h1 className="text-3xl font-bold">VFX projects</h1>
         <p className="text-muted-foreground mt-2">
           Discover VFX opportunities and find your next project
         </p>
@@ -196,7 +196,7 @@ const JobsBrowsePage = () => {
           <Card className="h-full">
             <CardContent className="p-0 h-full flex flex-col">
               <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold">Available Jobs</h3>
+                <h3 className="text-lg font-semibold">Available projects</h3>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent p-6 space-y-4">
                 {isLoading ? (
@@ -222,7 +222,7 @@ const JobsBrowsePage = () => {
                     <Card className="w-full max-w-md">
                       <CardContent className="p-8 text-center">
                         <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
+                        <h3 className="text-lg font-semibold mb-2">No projects found</h3>
                         <p className="text-muted-foreground mb-2">
                           Try adjusting your filters or check back later for new opportunities.
                         </p>

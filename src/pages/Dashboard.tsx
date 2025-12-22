@@ -259,7 +259,7 @@ const Dashboard = () => {
               {user?.roles?.includes('studio') || user?.roles?.includes('admin') ? (
                 <Button onClick={() => navigate("/jobs/create")} className="flex-1 sm:flex-none">
                   <Plus className="h-4 w-4 mr-2" />
-                  Post VFX Job
+                  Post VFX project
                 </Button>
               ) : null}
               <Button variant="outline" onClick={() => navigate("/profile/settings")} className="flex-1 sm:flex-none">
@@ -374,7 +374,7 @@ const Dashboard = () => {
           {/* VFX Jobs Section */}
           {(user?.roles?.includes('studio') || user?.roles?.includes('admin') || user?.roles?.includes('artist')) && (
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-6">VFX Jobs</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-6">VFX projects</h2>
               <Card className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
@@ -383,7 +383,7 @@ const Dashboard = () => {
                     size="lg"
                   >
                     <Award className="h-4 w-4 mr-2" />
-                    Browse Jobs
+                    Browse Projects
                   </Button>
                   <Button
                     onClick={() => navigate("/studio/jobs")}
@@ -392,13 +392,13 @@ const Dashboard = () => {
                     size="lg"
                   >
                     <Settings className="h-4 w-4 mr-2" />
-                    My Jobs & Bids
+                    My Projects & Bids
                   </Button>
                 </div>
                 <p className="text-muted-foreground text-xs sm:text-sm mt-4">
                   {user?.roles?.includes('studio') || user?.roles?.includes('admin')
-                    ? "Post VFX jobs and manage your projects"
-                    : "Browse available VFX jobs and submit bids"
+                    ? "Post VFX Projects and manage your projects"
+                    : "Browse available VFX projects and submit bids"
                   }
                 </p>
               </Card>

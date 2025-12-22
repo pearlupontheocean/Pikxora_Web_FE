@@ -7,7 +7,7 @@ export const jobCreateSchema = z.object({
   assignment_mode: z.enum(['direct', 'open'], {
     required_error: 'Please select assignment mode',
   }),
-  assigned_to: z.string().optional(),
+  assigned_to: z.array(z.string()).optional(),
   payment_type: z.enum(['fixed', 'per_shot', 'per_frame'], {
     required_error: 'Please select payment type',
   }),
@@ -28,19 +28,19 @@ export const jobCreateSchema = z.object({
   required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
   software_preferences: z.array(z.string()).optional(),
   deliverables: z.array(z.string()).min(1, 'At least one deliverable is required'),
-  bid_deadline: z.string().min(1, 'Bid deadline is required'),
+  bid_deadline: z.string().optional(),
   expected_start_date: z.string().optional(),
   final_delivery_date: z.string().min(1, 'Final delivery date is required'),
   notes_for_bidders: z.string().optional(),
   status: z.enum(['draft', 'open', 'under_review', 'awarded', 'in_progress', 'completed', 'cancelled']).default('draft'),
 }).refine((data) => {
-  // If assignment_mode is 'direct', assigned_to is required
-  if (data.assignment_mode === 'direct' && !data.assigned_to) {
+  // If assignment_mode is 'direct', assigned_to is required and must have at least one user
+  if (data.assignment_mode === 'direct' && (!data.assigned_to || data.assigned_to.length === 0)) {
     return false;
   }
   return true;
 }, {
-  message: "Assigned user is required for direct assignment",
+  message: "At least one association member is required for direct assignment",
   path: ["assigned_to"],
 }).refine((data) => {
   // If assignment_mode is 'open', bid_deadline is required
