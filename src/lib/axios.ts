@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+// Use relative URL in development, full URL in production
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 console.log("API_URL:", API_URL);
 
 // Create axios instance
@@ -18,19 +19,28 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('🔄 Request:', config.method?.toUpperCase(), config.url);
     return config;
   },
   (error) => {
+    console.error('❌ Request error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle errors
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ Response:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
+    console.error('❌ Response error:', error.response?.status, error.config?.url);
+    console.error('❌ Error details:', error.response?.data);
+    
     if (error.response?.status === 401) {
       // Token expired or invalid
+      console.log('🔐 Unauthorized - clearing token and redirecting to login');
       localStorage.removeItem('token');
       window.location.href = '/auth';
     }
