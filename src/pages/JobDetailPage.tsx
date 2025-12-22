@@ -202,7 +202,7 @@ const JobDetailPage = () => {
             The job you're looking for doesn't exist or has been removed.
           </p>
           <Button onClick={() => navigate('/jobs')} className="w-full sm:w-auto">
-            Back to Jobs
+            Back to Projects
           </Button>
         </div>
       </div>
@@ -394,7 +394,7 @@ const JobDetailPage = () => {
               onClick={() => navigate('/jobs')}
               className="w-full sm:w-auto flex-1 sm:flex-none"
             >
-              Back to Jobs
+              Back to Projects
             </Button>
             {isJobOwner() && (
               <Button
@@ -402,7 +402,7 @@ const JobDetailPage = () => {
                 onClick={() => navigate(`/jobs/${id}/edit`)}
                 className="w-full sm:w-auto flex-1 sm:flex-none"
               >
-                Edit Job
+                Edit project
               </Button>
             )}
           </div>
