@@ -22,6 +22,7 @@ import heroGlobe from "@/assets/HeroSection/RRR.jpg";
 import studioFuture from "@/assets/HeroSection/Salaar.jpg";
 import aiNeural from "@/assets/HeroSection/bahubali.jpg";
 import aiNeural2 from "@/assets/ai-neural.jpg";
+import ai from "@/assets/AI.png";
 import logo from "@/assets/LogoWhite.png"
 
 import artistCyber from "@/assets/HeroSection/dune.jpg";
@@ -689,7 +690,7 @@ const Index = () => {
               AI: The Cosmic Catalyst Reshaping VFX
             </h2>
             <p className="text-lg md:text-xl text-muted-foreground">
-              Harness It with Pikxora
+              Automate Complex Tasks • Amplify Creative Output • Scale Production Power
             </p>
           </motion.div>
 
@@ -701,35 +702,52 @@ const Index = () => {
               className="space-y-8"
             >
               <p className="text-base md:text-lg leading-relaxed text-foreground/90">
-                From generative neural networks birthing impossible worlds to predictive tools empowering solo artists, 
-                AI isn't replacing creators—<span className="text-primary font-semibold">it's amplifying Indian innovation on the global stage</span>.
+                Transform your VFX pipeline with AI-powered automation that handles the tedious, time-consuming tasks—<span className="text-primary font-semibold">so your team can focus on what truly matters: creating breathtaking visuals</span>.
               </p>
-              <p className="text-base md:text-lg leading-relaxed text-foreground/90">
-                At Pikxora, explore ethical AI integrations, case studies from Mumbai to Hollywood, and welfare safeguards 
-                against job displacement. Our platform champions responsible AI adoption that enhances human creativity rather than replacing it.
-              </p>
+              {/* <p className="text-base md:text-lg leading-relaxed text-foreground/90">
+                From Mumbai to Hollywood, leading studios are cutting production time by up to 70% while maintaining cinematic quality. 
+                Pikxora connects you with AI tools and workflows that revolutionize how VFX companies operate.
+              </p> */}
               <div className="space-y-4 pt-4">
                 {[
-                  "Real-Time Deepfakes & Virtual Humans (2025)",
-                  "AI-Assisted Scene Composition (2026)",
-                  "Sentient Simulation Environments (2030)"
+                  {
+                    title: "Intelligent Rotoscoping",
+                    description: "AI-powered edge detection and object isolation—reduce manual rotoscoping from days to hours"
+                  },
+                  {
+                    title: "Automated Camera Tracking",
+                    description: "Machine learning algorithms that track complex camera movements with pixel-perfect precision"
+                  },
+                  {
+                    title: "Smart Render Optimization",
+                    description: "AI-driven render management that predicts bottlenecks and optimizes resource allocation in real-time"
+                  },
+                  {
+                    title: "Automated Cleanup & Paint",
+                    description: "Neural networks that remove wires, rigs, and imperfections while preserving natural textures"
+                  }
                 ].map((item, index) => (
                   <motion.div 
                     key={index} 
-                    className="flex items-start gap-4 p-4 rounded-lg bg-card/30 border border-primary/10"
+                    className="flex items-start gap-4 p-5 rounded-lg bg-card/30 border border-primary/10 hover:border-primary/30 transition-all"
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Brain className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm md:text-base text-foreground/80 leading-relaxed">{item}</span>
+                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                      <Brain className="h-5 w-5 text-primary flex-shrink-0" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                    </div>
                   </motion.div>
                 ))}
               </div>
               <Button size="lg" className="mt-8 px-8 py-6 text-base rounded-lg">
                 <Sparkles className="mr-2 h-5 w-5" />
-                Explore AI Tools
+                Discover AI-Powered Solutions
               </Button>
             </motion.div>
 
@@ -741,11 +759,11 @@ const Index = () => {
             >
               <div className="relative rounded-xl overflow-hidden border-2 border-primary/30 shadow-2xl">
                 <img
-                  src={aiNeural2}
+                  src={ai}
                   alt="AI Neural Network Visualization"
                   className="w-full h-auto"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+                {/* <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" /> */}
               </div>
             </motion.div>
           </div>
