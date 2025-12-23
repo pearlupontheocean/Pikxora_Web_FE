@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DemoCredentials } from "@/components/DemoCredentials";
 import { useCurrentUser, useSignUp, useSignIn } from "@/lib/api-hooks";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -25,6 +25,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("studio");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // React Query hooks - disable if no token to prevent re-render loops
@@ -156,14 +157,30 @@ const Auth = () => {
 
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="border-border focus:border-primary"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="border-border focus:border-primary pr-10" // Add padding-right for the icon
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-1 text-muted-foreground hover:bg-transparent"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <Button
