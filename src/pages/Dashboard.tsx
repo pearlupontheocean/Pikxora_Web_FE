@@ -210,6 +210,7 @@ const Dashboard = () => {
 
   // Check if the current user is a verified artist or studio
   const isArtistOrStudio = user?.roles?.includes('artist') || user?.roles?.includes('studio');
+  const hasWall = walls.length > 0;
 
   useEffect(() => {
     const hasToken = !!localStorage.getItem("token");
@@ -299,7 +300,7 @@ const Dashboard = () => {
           <div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <h2 className="text-xl sm:text-2xl font-bold">Your Walls</h2>
-              {profile?.verification_status === "approved" && (
+              {profile?.verification_status === "approved" && !hasWall && (
                 <Button onClick={() => navigate("/wall/create")} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Wall
@@ -307,16 +308,22 @@ const Dashboard = () => {
               )}
             </div>
 
-            {walls.length === 0 ? (
+            {walls.length === 0 && profile?.verification_status === "approved" ? (
               <Card className="p-8 sm:p-12 text-center border-dashed">
                 <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                   You haven't created any walls yet
                 </p>
-                {profile?.verification_status === "approved" && (
+                {!hasWall && (
                   <Button onClick={() => navigate("/wall/create")} className="w-full sm:w-auto">
                     Create Your First Wall
                   </Button>
                 )}
+              </Card>
+            ) : walls.length === 0 && profile?.verification_status !== "approved" ? (
+              <Card className="p-8 sm:p-12 text-center border-dashed">
+                <p className="text-muted-foreground mb-4 text-sm sm:text-base">
+                  You cannot create a wall until your profile is approved.
+                </p>
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

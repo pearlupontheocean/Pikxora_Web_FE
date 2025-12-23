@@ -22,7 +22,7 @@ export const useCurrentUser = () => {
     retry: false,
     refetchOnMount: true,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 0, // Don't cache (renamed from cacheTime in RQ v5)
+    gcTime: 1000 * 60 * 5, // Also 5 minutes, to keep data in cache longer than 0
   });
 };
 
@@ -260,9 +260,18 @@ export const useCreateProject = () => {
       const response = await axiosInstance.post('/projects', data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (newProject) => {
       // Invalidate projects query - will need to refetch manually
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // Invalidate projects by user if the new project has a user_id (via wall_id)
+      if (newProject?.wall_id) {
+        // To invalidate 'projectsByUser', we need the userId associated with the wall.
+        // This might require a small adjustment if the backend doesn't return user_id directly with newProject.
+        // For now, we'll invalidate generally and rely on broader invalidations.
+        // A more precise invalidation would be: queryClient.invalidateQueries({ queryKey: ['projectsByUser', newProject.userId] });
+        // As a compromise, we can invalidate any 'projectsByUser' query to be safe.
+        queryClient.invalidateQueries({ queryKey: ['projectsByUser'] });
+      }
     },
   });
 };
@@ -469,8 +478,6 @@ export const useUpdateJob = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       queryClient.invalidateQueries({ queryKey: ['job', data.job._id] });
-      // Also refetch the specific job to ensure it's updated
-      queryClient.refetchQueries({ queryKey: ['job', data.job._id] });
     },
   });
 };
