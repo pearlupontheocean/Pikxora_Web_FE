@@ -30,6 +30,16 @@ const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Helper function to navigate back with fallback
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/jobs');
+    }
+  };
+
   const { data: currentUser } = useCurrentUser() as { data: CurrentUser | undefined };
   const { data: job, isLoading: jobLoading, error: jobError } = useJob(id!);
   const { data: bids, isLoading: bidsLoading } = useBidsForJob(id!);
@@ -201,7 +211,7 @@ const JobDetailPage = () => {
           <p className="text-muted-foreground mb-6">
             The job you're looking for doesn't exist or has been removed.
           </p>
-          <Button onClick={() => navigate('/jobs')} className="w-full sm:w-auto">
+          <Button onClick={handleBack} className="w-full sm:w-auto">
             Back to Projects
           </Button>
         </div>
@@ -391,7 +401,7 @@ const JobDetailPage = () => {
             <Button
               variant="outline"
               size="lg"
-              onClick={() => navigate('/jobs')}
+              onClick={handleBack}
               className="w-full sm:w-auto flex-1 sm:flex-none"
             >
               Back to Projects

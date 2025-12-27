@@ -23,6 +23,16 @@ const JobEditPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Helper function to navigate back with fallback
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/jobs');
+    }
+  };
+
   // Define allowed status transitions
   const getAllowedStatuses = (currentStatus: string) => {
     const transitions: Record<string, string[]> = {
@@ -307,7 +317,7 @@ const JobEditPage = () => {
           <p className="text-muted-foreground mb-4">
             The job you're trying to edit doesn't exist or you don't have permission.
           </p>
-          <Button onClick={() => navigate('/jobs')}>
+          <Button onClick={handleBack}>
             Back to projects
           </Button>
         </div>
@@ -328,7 +338,7 @@ const JobEditPage = () => {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate(`/jobs/${id}`)}
+              onClick={handleBack}
             >
               <X className="h-4 w-4 mr-2" />
               Cancel
