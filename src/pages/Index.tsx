@@ -71,12 +71,27 @@ const heroMedia: HeroMedia[] = [
   },
 ];
 
-const heroTaglines = [
-  "Cinematic universes, crafted frame by frame.",
-  "Indian studios, writing the next chapter of global VFX.",
-  "AI-powered pipelines that keep your imagination in motion.",
-  "Artists, reels, and stories that travel beyond borders.",
-  "Collaborations and festivals that light up the VFX sky.",
+const heroContent = [
+  {
+    title: "Where Indian Pixels Power Global Dreams",
+    tagline: "Cinematic universes, crafted frame by frame."
+  },
+  {
+    title: "Indian Studios, Writing the Next Chapter",
+    tagline: "Showcasing cutting-edge reels that captivate audiences worldwide."
+  },
+  {
+    title: "AI-Powered VFX Revolution",
+    tagline: "Automating complex tasks to amplify creative output and scale production power."
+  },
+  {
+    title: "Artists, Reels, and Stories",
+    tagline: "Portfolios that travel beyond borders and inspire global audiences."
+  },
+  {
+    title: "Collaborations & Festivals",
+    tagline: "Connecting visionaries and lighting up the VFX sky together."
+  },
 ];
 
 const wordContainerVariants = {
@@ -273,14 +288,14 @@ const Index = () => {
             <div className="bg-none md:bg-none rounded-3xl md:rounded-[2.5rem] px-5 py-6 md:px-8 md:py-8">
               <motion.h1
                 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-center md:text-left"
-                key={currentIndex}
+                key={`title-${currentIndex}`}
                 variants={wordContainerVariants}
                 initial="hidden"
                 animate="visible"
               >
-                {"Where Indian Pixels Power Global Dreams".split(" ").map((word, index) => (
+                {heroContent[currentIndex % heroContent.length].title.split(" ").map((word, index) => (
                   <motion.span
-                    key={`${word}-${index}`}
+                    key={`title-${word}-${index}-${currentIndex}`}
                     className="inline-block mr-2"
                     variants={wordItemVariants}
                   >
@@ -296,9 +311,9 @@ const Index = () => {
                 initial="hidden"
                 animate="visible"
               >
-                {heroTaglines[currentIndex % heroTaglines.length].split(" ").map((word, index) => (
+                {heroContent[currentIndex % heroContent.length].tagline.split(" ").map((word, index) => (
                   <motion.span
-                    key={`tag-${word}-${index}`}
+                    key={`tag-${word}-${index}-${currentIndex}`}
                     className="inline-block mr-2"
                     variants={wordItemVariants}
                   >

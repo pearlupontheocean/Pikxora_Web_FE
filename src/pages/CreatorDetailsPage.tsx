@@ -23,6 +23,16 @@ const CreatorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Helper function to navigate back with fallback
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/browse');
+    }
+  };
+
   const { data: currentUserData, isLoading: userLoading } = useCurrentUser();
   const currentUserId = currentUserData?.user?.id;
   const isArtistOrStudio = currentUserData?.user?.roles?.includes("artist") || currentUserData?.user?.roles?.includes("studio");
@@ -86,7 +96,7 @@ const CreatorDetailsPage: React.FC = () => {
       <div className="min-h-screen container mx-auto p-4 pt-24 pb-12 text-center text-red-500  flex flex-col items-center justify-center">
         <h1 className="text-3xl font-bold mb-4">Creator Not Found</h1>
         <p>The creator you are looking for does not exist or an error occurred.</p>
-        <Button onClick={() => navigate("/browse")} className="mt-4 bg-red-600 hover:bg-red-700 text-white">
+        <Button onClick={handleBack} className="mt-4 bg-red-600 hover:bg-red-700 text-white">
           Back to Browse Creators
         </Button>
       </div>

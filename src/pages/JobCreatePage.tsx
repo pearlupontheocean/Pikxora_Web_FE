@@ -19,6 +19,16 @@ import { jobCreateSchema, type JobCreateFormData } from '@/lib/validations/jobs'
 
 const JobCreatePage = () => {
   const navigate = useNavigate();
+
+  // Helper function to navigate back with fallback
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/jobs');
+    }
+  };
   const createJobMutation = useCreateJob();
   const publishJobMutation = usePublishJob();
   const { data: currentUserData } = useCurrentUser();
@@ -654,7 +664,7 @@ const JobCreatePage = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/jobs')}
+            onClick={handleBack}
           >
             Cancel
           </Button>

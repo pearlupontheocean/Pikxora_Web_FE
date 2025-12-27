@@ -32,6 +32,17 @@ type WallFormData = z.infer<typeof wallSchema>;
 const WallEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Helper function to navigate back with fallback
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(`/wall/${id}`);
+    }
+  };
+
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [logoPreview, setLogoPreview] = useState("");
@@ -548,7 +559,7 @@ const WallEdit = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate(`/wall/${id}`)}
+                  onClick={handleBack}
                   disabled={submitting}
                 >
                   Cancel
