@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useCurrentUser } from "@/lib/api-hooks";
 import { 
   ArrowRight, 
   Globe, 
@@ -193,6 +194,7 @@ const AnimatedStatValue: React.FC<{ value: number; suffix?: string }> = ({ value
 
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { data: currentUser } = useCurrentUser();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -245,9 +247,9 @@ const Index = () => {
 
         {/* Floating Nav */}
         <div className="absolute inset-x-0 top-0 z-20 mt-[-100px]">
-          <div className="container mx-auto max-w-7xl px-4 lg:px-8 py-6 flex items-center justify-between">
+          <div className="container  max-w-9xl px-4 lg:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="relative  border-none">
+              <div className="relative ml-[-20px] border-none">
                 <img
                   src={logo}
                   alt="Pikxora logo"
@@ -257,13 +259,19 @@ const Index = () => {
             </Link>
 
             <div className="hidden md:flex items-center gap-4">
-              <Link to="/auth">
-                <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
-                  <Rocket className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-                  Launch Studio
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              {currentUser?.user ? (
+                <div className="px-7 py-3 rounded-full bg-primary/10 border border-primary/40 text-sm font-semibold text-foreground">
+                  {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
+                </div>
+              ) : (
+                <Link to="/auth">
+                  <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
+                    <Rocket className="mr-2 h-4 w-4 group-hover:animate-pulse" />
+                    Launch Studio
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/auth">
                 <Button
                   variant="outline"
