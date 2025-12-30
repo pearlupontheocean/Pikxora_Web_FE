@@ -246,10 +246,10 @@ const Index = () => {
         </div>
 
         {/* Floating Nav */}
-        <div className="absolute inset-x-0 top-0 z-20 mt-[-100px]">
-          <div className="container  max-w-9xl px-4 lg:px-8 py-6 flex items-center justify-between">
+        <div className="absolute inset-x-0 top-0 z-20 mt-[-120px]">
+          <div className="container  max-w-10xl px-4 lg:px-8 py-6 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="relative ml-[-20px] border-none">
+              <div className="relative ml-[-70px] border-none">
                 <img
                   src={logo}
                   alt="Pikxora logo"
@@ -258,7 +258,7 @@ const Index = () => {
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4 mr-[-30px] mt-[-20px]">
               {currentUser?.user ? (
                 <div className="px-7 py-3 rounded-full bg-primary/10 border border-primary/40 text-sm font-semibold text-foreground">
                   {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
