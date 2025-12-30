@@ -1,4 +1,4 @@
-import { animate, motion, useInView, useMotionValue, useTransform } from "framer-motion";
+import { animate, motion, useInView, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -194,7 +194,7 @@ const AnimatedStatValue: React.FC<{ value: number; suffix?: string }> = ({ value
 
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -259,19 +259,38 @@ const Index = () => {
             </Link>
 
             <div className="hidden md:flex items-center gap-4 mr-[-30px] mt-[-20px]">
-              {currentUser?.user ? (
-                <div className="px-7 py-3 rounded-full bg-primary/10 border border-primary/40 text-sm font-semibold text-foreground">
-                  {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
-                </div>
-              ) : (
-                <Link to="/auth">
-                  <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
-                    <Rocket className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-                    Launch Studio
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              )}
+              <div className="relative min-w-[140px] h-[44px] flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {!userLoading && currentUser?.user ? (
+                    <motion.div
+                      key="username"
+                      initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="px-7 py-3 rounded-full bg-primary/10 border border-primary/40 text-sm font-semibold text-foreground whitespace-nowrap"
+                    >
+                      {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
+                    </motion.div>
+                  ) : !userLoading ? (
+                    <motion.div
+                      key="launch-studio"
+                      initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: -10 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <Link to="/auth">
+                        <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
+                          <Rocket className="mr-2 h-4 w-4 group-hover:animate-pulse" />
+                          Launch Studio
+                          <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
               <Link to="/auth">
                 <Button
                   variant="outline"
