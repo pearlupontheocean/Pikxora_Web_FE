@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Plus, Eye, Settings, Sparkles, Zap, Award, Globe, Lock, CheckCircle2, Users } from "lucide-react";
+import { Loader2, Plus, Eye, Settings, Sparkles, Zap, Award, Globe, Lock, CheckCircle2, Users, ExternalLink } from "lucide-react";
 import RatingStars from "@/components/RatingStars";
 import { toast } from "sonner";
+import IndustryAssociationsSection from "@/components/IndustryAssociationsSection";
 
 // Wall type definition
 interface Wall {
@@ -369,6 +370,9 @@ const Dashboard = () => {
               <AssociationsSummaryCard currentUserId={user?.id} pendingRequestsCount={pendingRequestsCount} />
             </div>
           )}
+
+          {/* Industry Associations Section */}
+          <IndustryAssociationsSection />
 
           {/* Discover Creators Section - Updated for Responsiveness */}
           <div className="w-full">
