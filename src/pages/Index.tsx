@@ -1,9 +1,10 @@
 import { animate, motion, useInView, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCurrentUser } from "@/lib/api-hooks";
+import IndustryAssociationsSection from "@/components/IndustryAssociationsSection";
 import { 
   ArrowRight, 
   Globe, 
@@ -17,7 +18,8 @@ import {
   Calendar,
   Newspaper,
   Brain,
-  Award
+  Award,
+  LogIn
 } from "lucide-react";
 import heroGlobe from "@/assets/HeroSection/RRR.jpg";
 import studioFuture from "@/assets/HeroSection/Salaar.jpg";
@@ -95,24 +97,117 @@ const heroContent = [
   },
 ];
 
+// Professional animation variants with smooth easing
 const wordContainerVariants = {
   hidden: { opacity: 1 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.25, // slower stagger between words
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
     },
   },
 };
 
 const wordItemVariants = {
-  hidden: { opacity: 0, y: 6 },
+  hidden: { 
+    opacity: 0, 
+    y: 12,
+    filter: "blur(4px)",
+    scale: 0.95
+  },
   visible: {
     opacity: 1,
     y: 0,
+    filter: "blur(0px)",
+    scale: 1,
     transition: {
-      duration: 0.9, // slower fade for each word
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1] as const, // Custom smooth easing
     },
+  },
+};
+
+// Professional scroll-triggered animation variants
+const fadeUpVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 50,
+    filter: "blur(8px)",
+    scale: 0.96
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 0.9,
+      ease: [0.16, 1, 0.3, 1] as const,
+      opacity: { duration: 0.7 },
+      y: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const },
+      filter: { duration: 0.6 },
+      scale: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const }
+    }
+  },
+};
+
+const headerVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 50,
+    filter: "blur(10px)",
+    scale: 0.95
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 1,
+      delay: 0.15,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
+  },
+};
+
+const subtitleVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 35,
+    filter: "blur(6px)",
+    scale: 0.97
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 0.85,
+      delay: 0.3,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
+  },
+};
+
+const cardVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 30,
+    scale: 0.95,
+    filter: "blur(4px)"
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
   },
 };
 
@@ -195,6 +290,7 @@ const AnimatedStatValue: React.FC<{ value: number; suffix?: string }> = ({ value
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -268,13 +364,19 @@ const Index = () => {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.8, y: -10 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="px-7 py-3 rounded-full bg-primary/10 border border-primary/40 text-sm font-semibold text-foreground whitespace-nowrap"
                     >
-                      {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
+                      <Button
+                        onClick={() => navigate("/dashboard")}
+                        className="px-7 py-3 rounded-full bg-black border border-primary/60 hover:bg-gray-900 hover:border-primary/80 text-sm font-semibold text-white whitespace-nowrap group transition-all cursor-pointer shadow-lg"
+                      >
+                        <Sparkles className="mr-2 h-4 w-4 group-hover:rotate-12 transition-transform text-primary" />
+                        {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
                     </motion.div>
                   ) : !userLoading ? (
                     <motion.div
-                      key="launch-studio"
+                      key="signin"
                       initial={{ opacity: 0, scale: 0.8, y: -10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.8, y: -10 }}
@@ -282,24 +384,14 @@ const Index = () => {
                     >
                       <Link to="/auth">
                         <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
-                          <Rocket className="mr-2 h-4 w-4 group-hover:animate-pulse" />
-                          Launch Studio
-                          <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                          <LogIn className="mr-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                          Sign In
                         </Button>
                       </Link>
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
               </div>
-              <Link to="/auth">
-                <Button
-                  variant="outline"
-                  className="px-6 py-3 rounded-full border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all text-sm font-semibold"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Artist Mode
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -367,19 +459,26 @@ const Index = () => {
       <section className="pt-28 px-6 lg:px-8 bg-gradient-to-b from-background via-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              variants={headerVariants}
+            >
               The Neural Hub for VFX Growth
-            </h2>
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            </motion.h2>
+            <motion.p 
+              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              variants={subtitleVariants}
+            >
               Pikxora isn't just a platform—it's a living ecosystem where studios showcase cutting-edge reels, 
               artists build portfolios with AI-enhanced tools, and the community drives welfare through mentorship, 
               fair-pay advocacy, and skill-upgrading grants.
-            </p>
+            </motion.p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16">
@@ -407,17 +506,28 @@ const Index = () => {
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ delay: index * 0.08 }}
                 className="group"
               >
-                <Card className="p-8 h-full border border-primary/20 hover:border-primary/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2">
-                  <feature.icon className="h-14 w-14 text-primary mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] group-hover:scale-110 transition-transform duration-300" />
-                  <h3 className="text-xl font-bold mb-4 text-foreground">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-                </Card>
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Card className="p-8 h-full border border-primary/20 hover:border-primary/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                    <motion.div
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    >
+                      <feature.icon className="h-14 w-14 text-primary mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] transition-all duration-500" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold mb-4 text-foreground group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                  </Card>
+                </motion.div>
               </motion.div>
             ))}
           </div>
@@ -433,21 +543,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Showcase Studios & Talent */}
-      <section className="pt-0 pb-2 px-6 lg:px-8 bg-gradient-to-b from-background to-card">
+      {/* Industry Associations Section */}
+      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <IndustryAssociationsSection />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Showcase Studios & Talent */}
+      <section className="pt-0 pb-2 px-6 lg:px-8 bg-gradient-to-b from-background to-card">
+        <div className="container mx-auto max-w-7xl">
+          <motion.div
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-6 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-6 leading-tight"
+              variants={headerVariants}
+            >
               Global Studios • Infinite Talent
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+            </motion.h2>
+            <motion.p 
+              className="text-lg md:text-xl text-muted-foreground leading-relaxed"
+              variants={subtitleVariants}
+            >
               Connecting visionaries across continents
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Studio Cards */}
@@ -477,13 +608,18 @@ const Index = () => {
             ].map((studio, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Card className="overflow-hidden border border-primary/30 hover:border-primary/60 cursor-pointer transition-all duration-300 hover:-translate-y-2 h-full">
+                <motion.div
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Card className="overflow-hidden border border-primary/30 hover:border-primary/60 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 h-full">
                   <div className="relative aspect-video overflow-hidden">
                     <img
                       src={studio.image}
@@ -507,26 +643,44 @@ const Index = () => {
                     </p>
                     <p className="text-sm text-foreground/80 leading-relaxed">{studio.specialty}</p>
                     <Link to="/browse">
-                      <Button className="w-full mt-4 group/btn">
-                        Connect Now
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                      </Button>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <Button className="w-full mt-4 group/btn">
+                          Connect Now
+                          <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </Button>
+                      </motion.div>
                     </Link>
                   </div>
                 </Card>
+                </motion.div>
               </motion.div>
             ))}
           </div>
 
           {/* Artist Spotlight */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-12"
           >
-            <h3 className="text-3xl md:text-4xl font-bold mb-4">Rising Stars</h3>
-            <p className="text-muted-foreground text-base">Meet the next generation of VFX pioneers</p>
+            <motion.h3 
+              className="text-3xl md:text-4xl font-bold mb-4"
+              variants={headerVariants}
+            >
+              Rising Stars
+            </motion.h3>
+            <motion.p 
+              className="text-muted-foreground text-base"
+              variants={subtitleVariants}
+            >
+              Meet the next generation of VFX pioneers
+            </motion.p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mt-12">
@@ -553,13 +707,18 @@ const Index = () => {
             ].map((artist, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-2 h-full bg-card/50 backdrop-blur-sm">
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
                   {/* {artist.image && (
                     <div className="relative w-28 h-28 mx-auto mb-6 rounded-full overflow-hidden border-2 border-primary/40 group-hover:border-primary/70 transition-colors ring-4 ring-primary/10">
                       <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -575,6 +734,7 @@ const Index = () => {
                     <p className="text-sm italic text-foreground/70 leading-relaxed pt-2">{artist.specialty}</p>
                   </div>
                 </Card>
+                </motion.div>
               </motion.div>
             ))}
           </div>
@@ -585,17 +745,24 @@ const Index = () => {
       <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              variants={headerVariants}
+            >
               Upcoming Events • Hype Timeline
-            </h2>
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            </motion.h2>
+            <motion.p 
+              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              variants={subtitleVariants}
+            >
               Network with visionaries, demo bleeding-edge tech, and co-create the industry's tomorrow
-            </p>
+            </motion.p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -621,13 +788,18 @@ const Index = () => {
             ].map((event, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-2 h-full bg-card/50 backdrop-blur-sm">
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
                   <div className="flex items-center gap-2 mb-6">
                     <Calendar className="h-5 w-5 text-primary" />
                     <span className="text-xs text-primary font-semibold uppercase tracking-wider">{event.type}</span>
@@ -635,11 +807,18 @@ const Index = () => {
                   <h3 className="text-xl md:text-2xl font-bold mb-4 text-foreground leading-tight">{event.name}</h3>
                   <p className="text-sm text-primary italic mb-4 font-medium">{event.tagline}</p>
                   <p className="text-sm text-muted-foreground mb-6">{event.dates}</p>
-                  <Button variant="outline" size="sm" className="w-full border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
-                    <Rocket className="mr-2 h-4 w-4" />
-                    Secure Your Spot
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button variant="outline" size="sm" className="w-full border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
+                      <Rocket className="mr-2 h-4 w-4" />
+                      Secure Your Spot
+                    </Button>
+                  </motion.div>
                 </Card>
+                </motion.div>
               </motion.div>
             ))}
           </div>
@@ -650,17 +829,24 @@ const Index = () => {
       <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-background to-card">
         <div className="container mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              variants={headerVariants}
+            >
               Latest Industry Pulse
-            </h2>
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed">
+            </motion.h2>
+            <motion.p 
+              className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
+              variants={subtitleVariants}
+            >
               Stay ahead of the VFX revolution
-            </p>
+            </motion.p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 mb-12">
@@ -688,13 +874,18 @@ const Index = () => {
             ].map((news, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                variants={cardVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:-translate-y-2 h-full cursor-pointer bg-card/50 backdrop-blur-sm">
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full cursor-pointer bg-card/50 backdrop-blur-sm">
                   <div className="flex items-center gap-2 mb-4">
                     <Newspaper className="h-5 w-5 text-primary" />
                     <span className="text-xs text-primary font-semibold uppercase tracking-wider">{news.category}</span>
@@ -702,6 +893,7 @@ const Index = () => {
                   <h3 className="font-bold text-xl mb-3 text-foreground group-hover:text-primary/90 transition-colors leading-tight">{news.headline}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{news.teaser}</p>
                 </Card>
+                </motion.div>
               </motion.div>
             ))}
           </div>
@@ -723,26 +915,37 @@ const Index = () => {
         
         <div className="container mx-auto relative z-10 max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow-intense mb-8 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow-intense mb-8 leading-tight"
+              variants={headerVariants}
+            >
               AI: The Cosmic Catalyst Reshaping VFX
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground">
+            </motion.h2>
+            <motion.p 
+              className="text-lg md:text-xl text-muted-foreground"
+              variants={subtitleVariants}
+            >
               Automate Complex Tasks • Amplify Creative Output • Scale Production Power
-            </p>
+            </motion.p>
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-8"
-            >
+              <motion.div
+                initial={{ opacity: 0, x: -40, scale: 0.95 }}
+                whileInView={{ opacity: 1, x: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1]
+                }}
+                className="space-y-8"
+              >
               <p className="text-base md:text-lg leading-relaxed text-foreground/90">
                 Transform your VFX pipeline with AI-powered automation that handles the tedious, time-consuming tasks—<span className="text-primary font-semibold">so your team can focus on what truly matters: creating breathtaking visuals</span>.
               </p>
@@ -772,10 +975,15 @@ const Index = () => {
                   <motion.div 
                     key={index} 
                     className="flex items-start gap-4 p-5 rounded-lg bg-card/30 border border-primary/10 hover:border-primary/30 transition-all"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
+                    initial={{ opacity: 0, x: -30, scale: 0.95 }}
+                    whileInView={{ opacity: 1, x: 0, scale: 1 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ 
+                      delay: index * 0.1,
+                      duration: 0.7,
+                      ease: [0.16, 1, 0.3, 1]
+                    }}
+                    whileHover={{ x: 5, scale: 1.02 }}
                   >
                     <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
                       <Brain className="h-5 w-5 text-primary flex-shrink-0" />
@@ -787,16 +995,26 @@ const Index = () => {
                   </motion.div>
                 ))}
               </div>
-              <Button size="lg" className="mt-8 px-8 py-6 text-base rounded-lg">
-                <Sparkles className="mr-2 h-5 w-5" />
-                Discover AI-Powered Solutions
-              </Button>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Button size="lg" className="mt-8 px-8 py-6 text-base rounded-lg">
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Discover AI-Powered Solutions
+                </Button>
+              </motion.div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                duration: 0.8,
+                ease: [0.16, 1, 0.3, 1]
+              }}
               className="relative lg:mt-0 mt-8"
             >
               <div className="relative rounded-xl overflow-hidden border-2 border-primary/30 shadow-2xl">
@@ -824,10 +1042,15 @@ const Index = () => {
             ].map((stat: StatConfig, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  delay: index * 0.1,
+                  duration: 0.7,
+                  ease: [0.16, 1, 0.3, 1]
+                }}
+                whileHover={{ scale: 1.05, y: -5 }}
                 className="text-center group"
               >
                 <stat.icon className="h-12 w-12 text-primary mx-auto mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] group-hover:scale-110 transition-transform duration-300" />
@@ -850,36 +1073,75 @@ const Index = () => {
 
         <div className="container mx-auto text-center relative z-10 max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
             className="space-y-10"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold red-glow-intense mb-8 leading-tight">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-7xl font-bold red-glow-intense mb-8 leading-tight"
+              variants={headerVariants}
+            >
               In Pikxora, Every Pixel Pulses with Purpose
-            </h2>
-            <p className="text-xl md:text-2xl lg:text-3xl font-light mb-10 leading-relaxed">
+            </motion.h2>
+            <motion.p 
+              className="text-xl md:text-2xl lg:text-3xl font-light mb-10 leading-relaxed"
+              variants={subtitleVariants}
+            >
               <span className="text-primary font-semibold">Crafted in India</span> • <span className="text-foreground">Conquering the Cosmos</span>
-            </p>
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-16 leading-relaxed">
+            </motion.p>
+            <motion.p 
+              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-16 leading-relaxed"
+              initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={{ once: false, margin: "-100px" }}
+              transition={{ 
+                duration: 0.85, 
+                delay: 0.4,
+                ease: [0.16, 1, 0.3, 1]
+              }}
+            >
               Join the revolution where creativity meets technology, tradition embraces innovation, 
               and every artist finds their voice in the global VFX symphony.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            </motion.p>
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-6 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-100px" }}
+              transition={{ 
+                duration: 0.8, 
+                delay: 0.5,
+                ease: [0.16, 1, 0.3, 1]
+              }}
+            >
               <Link to="/auth">
-                <Button size="lg" className="text-base md:text-lg px-10 py-7 rounded-lg group shadow-xl hover:shadow-2xl transition-all">
-                  <Rocket className="mr-2 h-6 w-6 group-hover:animate-pulse" />
-                  Launch Your Journey
-                  <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Button size="lg" className="text-base md:text-lg px-10 py-7 rounded-lg group shadow-xl hover:shadow-2xl transition-all">
+                    <Rocket className="mr-2 h-6 w-6 group-hover:animate-pulse" />
+                    Launch Your Journey
+                    <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
               </Link>
               <Link to="/browse">
-                <Button size="lg" variant="outline" className="text-base md:text-lg px-10 py-7 rounded-lg border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
-                  <Globe className="mr-2 h-6 w-6" />
-                  Explore the Universe
-                </Button>
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Button size="lg" variant="outline" className="text-base md:text-lg px-10 py-7 rounded-lg border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
+                    <Globe className="mr-2 h-6 w-6" />
+                    Explore the Universe
+                  </Button>
+                </motion.div>
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
