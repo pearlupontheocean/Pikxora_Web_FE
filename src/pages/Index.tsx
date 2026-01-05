@@ -547,10 +547,31 @@ const Index = () => {
       <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
+            className="text-center mb-20"
+          >
+            <motion.h2
+              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              variants={headerVariants}
+            >
+               Associations & Collaborations
+            </motion.h2>
+            <motion.p
+              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              variants={subtitleVariants}
+            >
+              Forge powerful connections and drive industry innovation.
+            </motion.p>
+          </motion.div>
+          <motion.div
+            variants={fadeUpVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-100px" }}
+            transition={{ delay: 0.2 }} // Add a slight delay for the content after the header
           >
             <IndustryAssociationsSection />
           </motion.div>

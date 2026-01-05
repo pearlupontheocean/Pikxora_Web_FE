@@ -1,4 +1,15 @@
-export const industryAssociations = [
+export interface IndustryAssociation {
+  id: string;
+  name: string;
+  fullName: string;
+  type: "National" | "International";
+  country: string;
+  logo: string;
+  website: string;
+  description: string;
+}
+
+export const industryAssociations: IndustryAssociation[] = [
   {
     id: "tvaga",
     name: "TVAGA",

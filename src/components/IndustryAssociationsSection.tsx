@@ -1,19 +1,93 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
-import { industryAssociations } from '@/data/industryAssociations';
+import { Globe, ExternalLink, ChevronLeft, ChevronRight, Award } from 'lucide-react';
+import { industryAssociations, IndustryAssociation } from '@/data/industryAssociations';
 
-interface IndustryAssociation {
-  id: string;
-  name: string;
-  fullName: string;
-  type: "National" | "International";
-  country: string;
-  logo: string;
-  website: string;
-  description: string;
-}
+// Professional scroll-triggered animation variants
+const fadeUpVariants = {
+  hidden: {
+    opacity: 0,
+    y: 50,
+    filter: "blur(8px)",
+    scale: 0.96
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 0.9,
+      ease: [0.16, 1, 0.3, 1] as const,
+      opacity: { duration: 0.7 },
+      y: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const },
+      filter: { duration: 0.6 },
+      scale: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const }
+    }
+  },
+};
+
+const headerVariants = {
+  hidden: {
+    opacity: 0,
+    y: 50,
+    filter: "blur(10px)",
+    scale: 0.95
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 1,
+      delay: 0.15,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
+  },
+};
+
+const subtitleVariants = {
+  hidden: {
+    opacity: 0,
+    y: 35,
+    filter: "blur(6px)",
+    scale: 0.97
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      duration: 0.85,
+      delay: 0.3,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
+  },
+};
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 30,
+    scale: 0.95,
+    filter: "blur(4px)"
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1] as const,
+    }
+  },
+};
+
 
 const IndustryAssociationCard: React.FC<{ association: IndustryAssociation }> = ({ association }) => (
   <a
@@ -22,17 +96,15 @@ const IndustryAssociationCard: React.FC<{ association: IndustryAssociation }> = 
     rel="noopener noreferrer"
     className="block group h-full"
   >
-    <Card className="relative overflow-hidden border-2 border-gray-800 bg-black group-hover:border-red-600 transition-all duration-300 h-full flex flex-col">
+    <Card className="relative overflow-hidden border border-primary/20 hover:border-primary/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full flex flex-col">
       {/* Red accent bar */}
-      <div className="h-1 bg-red-600 w-full flex-shrink-0" />
-      
       <div className="p-6 flex flex-col flex-grow min-h-0">
         {/* Logo section with white background - Fixed height */}
-        <div className="relative mb-4 h-32 flex-shrink-0 flex items-center justify-center bg-white/95 rounded-lg border border-gray-800 group-hover:border-red-600/30 transition-all duration-300 overflow-hidden">
+        <div className="relative w-28 h-28 mx-auto mb-6 rounded-full overflow-hidden border-2 border-primary/40 group-hover:border-primary/70 transition-colors ring-4 ring-primary/10">
           <img
             src={association.logo}
             alt={association.name}
-            className="max-w-full max-h-28 w-auto h-auto object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
@@ -44,29 +116,24 @@ const IndustryAssociationCard: React.FC<{ association: IndustryAssociation }> = 
               }
             }}
           />
+          <div className="absolute top-1 right-1">
+            <div className="flex items-center gap-1 bg-primary/20 backdrop-blur-md px-2 py-1 rounded-full border border-primary/30">
+              <Award className="h-3 w-3 text-primary" />
+              <span className="text-xs font-semibold text-foreground">Elite</span>
+            </div>
+          </div>
         </div>
 
         {/* Content - Fixed height sections */}
         <div className="space-y-3 flex flex-col flex-grow min-h-0">
-          {/* Title section - Fixed height */}
-          <div className="flex-shrink-0">
-            <h3 className="font-bold text-lg text-white mb-1 group-hover:text-red-600 transition-colors line-clamp-1">
-              {association.name}
-            </h3>
-            <p className="text-gray-400 text-xs line-clamp-2 h-8">
-              {association.fullName}
-            </p>
+          <div className="flex-shrink-0 text-center">
+            <h3 className="font-bold text-xl text-foreground mb-1">{association.name}</h3>
+            <p className="text-primary text-sm italic font-medium line-clamp-1">{association.fullName}</p>
           </div>
-
-          {/* Description - Fixed height with ellipsis */}
-          <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 h-16 flex-shrink-0">
+          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 h-16 flex-shrink-0 text-center">
             {association.description}
           </p>
-
-          {/* Spacer to push footer to bottom */}
           <div className="flex-grow min-h-0" />
-
-          {/* Footer - Fixed at bottom */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-800 flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Badge
@@ -129,15 +196,11 @@ const IndustryAssociationsSection: React.FC = () => {
         behavior: 'smooth'
       });
 
-      // Update button states after scroll animation
       setTimeout(checkScrollButtons, 300);
     }
   };
-
   return (
     <div className="relative">
-      <h2 className="text-xl sm:text-2xl font-bold mb-6">Industry Associations</h2>
-      
       <div className="relative group/scroll">
         {/* Left scroll button */}
         <button
@@ -159,13 +222,23 @@ const IndustryAssociationsSection: React.FC = () => {
           onScroll={checkScrollButtons}
           className="flex space-x-4 overflow-x-auto pb-4 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
-          {industryAssociations.map((association) => (
-            <div 
+          {industryAssociations.map((association, index) => (
+            <motion.div 
               key={association.id} 
               className="w-[280px] h-[380px] flex-shrink-0"
+              variants={cardVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: index * 0.1 }}
             >
-              <IndustryAssociationCard association={association} />
-            </div>
+              <motion.div
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <IndustryAssociationCard association={association} />
+              </motion.div>
+            </motion.div>
           ))}
         </div>
 
