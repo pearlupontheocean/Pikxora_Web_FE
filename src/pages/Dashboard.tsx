@@ -384,10 +384,10 @@ const Dashboard = () => {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold mb-6">VFX projects</h2>
               <Card className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-4">
                   <Button
                     onClick={() => navigate("/jobs")}
-                    className="flex-1"
+                    className="w-full"
                     size="lg"
                   >
                     <Award className="h-4 w-4 mr-2" />
@@ -396,14 +396,14 @@ const Dashboard = () => {
                   <Button
                     onClick={() => navigate("/studio/jobs")}
                     variant="outline"
-                    className="flex-1"
+                    className="w-full"
                     size="lg"
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     My Projects & Bids
                   </Button>
                 </div>
-                <p className="text-muted-foreground text-xs sm:text-sm mt-4">
+                <p className="text-muted-foreground text-xs sm:text-sm mt-6">
                   {user?.roles?.includes('studio') || user?.roles?.includes('admin')
                     ? "Post VFX Projects and manage your projects"
                     : "Browse available VFX projects and submit bids"
