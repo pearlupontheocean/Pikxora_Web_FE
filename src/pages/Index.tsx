@@ -289,6 +289,7 @@ const AnimatedStatValue: React.FC<{ value: number; suffix?: string }> = ({ value
 
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const navigate = useNavigate();
 
@@ -298,6 +299,16 @@ const Index = () => {
     }, 6000); // 6s per image
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // (Text animation now handled by Framer Motion, keyed on currentIndex)
@@ -342,20 +353,29 @@ const Index = () => {
         </div>
 
         {/* Floating Nav */}
-        <div className="fixed inset-x-0 top-0 z-50 bg-transparent">
-          <div className="container max-w-7xl px-2 lg:px-2 py-3 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="relative ">
-                <img
-                  src={logo}
-                  alt="Pikxora logo"
-                  className="h-24 w-auto object-cover"
-                />
-              </div>
-            </Link>
+        <motion.div 
+          className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+            isScrolled 
+              ? 'bg-background/80 backdrop-blur-md border-b border-primary/20 shadow-lg' 
+              : 'bg-transparent'
+          }`}
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="container max-w-9xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+              <Link to="/" className="flex items-center gap-2 sm:gap-3">
+                <div className="relative">
+                  <img
+                    src={logo}
+                    alt="Pikxora logo"
+                    className="h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20 w-auto object-cover transition-all duration-300"
+                  />
+                </div>
+              </Link>
 
-            <div className="flex items-center gap-4">
-              <div className="relative min-w-[140px] h-[44px] flex items-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="relative min-w-[100px] sm:min-w-[140px] h-[36px] sm:h-[44px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   {!userLoading && currentUser?.user ? (
                     <motion.div
@@ -367,11 +387,14 @@ const Index = () => {
                     >
                       <Button
                         onClick={() => navigate("/dashboard")}
-                        className="px-7 py-3 rounded-full bg-black border border-primary/60 hover:bg-gray-900 hover:border-primary/80 text-sm font-semibold text-white whitespace-nowrap group transition-all cursor-pointer shadow-lg"
+                        className="px-3 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full bg-black border border-primary/60 hover:bg-gray-900 hover:border-primary/80 text-xs sm:text-sm font-semibold text-white whitespace-nowrap group transition-all cursor-pointer shadow-lg"
                       >
-                        <Sparkles className="mr-2 h-4 w-4 group-hover:rotate-12 transition-transform text-primary" />
-                        {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:rotate-12 transition-transform text-primary" />
+                        <span className="hidden sm:inline">
+                          {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
+                        </span>
+                        <span className="sm:hidden">Profile</span>
+                        <ArrowRight className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </motion.div>
                   ) : !userLoading ? (
@@ -383,9 +406,10 @@ const Index = () => {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
                       <Link to="/auth">
-                        <Button className="px-7 py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-sm font-semibold">
-                          <LogIn className="mr-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                          Sign In
+                        <Button className="px-3 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm font-semibold">
+                          <LogIn className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-0.5 transition-transform" />
+                          <span className="hidden sm:inline">Sign In</span>
+                          <span className="sm:hidden">Login</span>
                         </Button>
                       </Link>
                     </motion.div>
@@ -394,19 +418,19 @@ const Index = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Centered overlay text with faded background */}
-        <div className="relative z-10 container px-4 lg:px-6">
+        <div className="relative z-10 container px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 md:pt-32">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-3xl left-0"
+            className="max-w-3xl mx-auto sm:mx-0"
           >
-            <div className="bg-none md:bg-none rounded-3xl md:rounded-[2.5rem] px-5 py-6 md:px-8 md:py-8">
+            <div className="bg-none md:bg-none rounded-2xl sm:rounded-3xl md:rounded-[2.5rem] px-4 sm:px-5 md:px-8 py-4 sm:py-6 md:py-8">
               <motion.h1
-                className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-center md:text-left"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-3 sm:mb-4 text-center sm:text-left"
                 key={`title-${currentIndex}`}
                 variants={wordContainerVariants}
                 initial="hidden"
@@ -415,7 +439,7 @@ const Index = () => {
                 {heroContent[currentIndex % heroContent.length].title.split(" ").map((word, index) => (
                   <motion.span
                     key={`title-${word}-${index}-${currentIndex}`}
-                    className="inline-block mr-2"
+                    className="inline-block mr-1 sm:mr-2"
                     variants={wordItemVariants}
                   >
                     {word}
@@ -425,7 +449,7 @@ const Index = () => {
 
               <motion.p
                 key={`tagline-${currentIndex}`}
-                className="mt-3 text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed text-center md:text-left min-h-[2.5rem]"
+                className="mt-2 sm:mt-3 text-xs sm:text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed text-center sm:text-left min-h-[2rem] sm:min-h-[2.5rem]"
                 variants={wordContainerVariants}
                 initial="hidden"
                 animate="visible"
@@ -433,7 +457,7 @@ const Index = () => {
                 {heroContent[currentIndex % heroContent.length].tagline.split(" ").map((word, index) => (
                   <motion.span
                     key={`tag-${word}-${index}-${currentIndex}`}
-                    className="inline-block mr-2"
+                    className="inline-block mr-1 sm:mr-2"
                     variants={wordItemVariants}
                   >
                     {word}
@@ -456,7 +480,7 @@ const Index = () => {
       </section>
 
       {/* Empowerment Spotlight Section */}
-      <section className="pt-28 px-6 lg:px-8 bg-gradient-to-b from-background via-card to-background">
+      <section className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             variants={fadeUpVariants}
@@ -466,13 +490,13 @@ const Index = () => {
             className="text-center mb-20"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
               The Neural Hub for VFX Growth
             </motion.h2>
             <motion.p 
-              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2"
               variants={subtitleVariants}
             >
               Pikxora isn't just a platform—it's a living ecosystem where studios showcase cutting-edge reels, 
@@ -481,7 +505,7 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-12 sm:mb-16">
             {[
               {
                 icon: TrendingUp,
@@ -517,15 +541,15 @@ const Index = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <Card className="p-8 h-full border border-primary/20 hover:border-primary/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                  <Card className="p-4 sm:p-6 md:p-8 h-full border border-primary/20 hover:border-primary/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
                     <motion.div
                       whileHover={{ scale: 1.15, rotate: 5 }}
                       transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     >
-                      <feature.icon className="h-14 w-14 text-primary mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] transition-all duration-500" />
+                      <feature.icon className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 text-primary mb-4 sm:mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] transition-all duration-500" />
                     </motion.div>
-                    <h3 className="text-xl font-bold mb-4 text-foreground group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                    <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-4 text-foreground group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{feature.description}</p>
                   </Card>
                 </motion.div>
               </motion.div>
@@ -544,23 +568,23 @@ const Index = () => {
       </section>
 
       {/* Industry Associations Section */}
-      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             variants={fadeUpVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-20"
+            className="text-center mb-12 sm:mb-16 md:mb-20"
           >
             <motion.h2
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
                Associations & Collaborations
             </motion.h2>
             <motion.p
-              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2"
               variants={subtitleVariants}
             >
               Forge powerful connections and drive industry innovation.
@@ -579,23 +603,23 @@ const Index = () => {
       </section>
 
       {/* Showcase Studios & Talent */}
-      <section className="pt-0 pb-2 px-6 lg:px-8 bg-gradient-to-b from-background to-card">
+      <section className="pt-8 sm:pt-12 md:pt-0 pb-2 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-card">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             variants={fadeUpVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-20"
+            className="text-center mb-12 sm:mb-16 md:mb-20"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-6 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 leading-tight px-2"
               variants={headerVariants}
             >
               Global Studios • Infinite Talent
             </motion.h2>
             <motion.p 
-              className="text-lg md:text-xl text-muted-foreground leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed px-2"
               variants={subtitleVariants}
             >
               Connecting visionaries across continents
@@ -603,7 +627,7 @@ const Index = () => {
           </motion.div>
 
           {/* Studio Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-12 sm:mb-16 md:mb-20">
             {[
               {
                 name: "PixelForge India",
@@ -655,14 +679,14 @@ const Index = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="p-8 space-y-4">
-                    <h3 className="text-2xl font-bold red-glow">{studio.name}</h3>
-                    <p className="text-sm text-primary italic font-medium">{studio.tagline}</p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-primary" />
+                  <div className="p-4 sm:p-6 md:p-8 space-y-3 sm:space-y-4">
+                    <h3 className="text-xl sm:text-2xl font-bold red-glow">{studio.name}</h3>
+                    <p className="text-xs sm:text-sm text-primary italic font-medium">{studio.tagline}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                      <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       {studio.location}
                     </p>
-                    <p className="text-sm text-foreground/80 leading-relaxed">{studio.specialty}</p>
+                    <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed">{studio.specialty}</p>
                     <Link to="/browse">
                       <motion.div
                         whileHover={{ scale: 1.05 }}
@@ -688,23 +712,23 @@ const Index = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-12"
           >
             <motion.h3 
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 px-2"
               variants={headerVariants}
             >
               Rising Stars
             </motion.h3>
             <motion.p 
-              className="text-muted-foreground text-base"
+              className="text-muted-foreground text-sm sm:text-base px-2"
               variants={subtitleVariants}
             >
               Meet the next generation of VFX pioneers
             </motion.p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-8 sm:mt-12">
             {[
               {
                 name: "Aisha Rao",
@@ -739,20 +763,20 @@ const Index = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
+                  <Card className="p-4 sm:p-6 md:p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
                   {/* {artist.image && (
                     <div className="relative w-28 h-28 mx-auto mb-6 rounded-full overflow-hidden border-2 border-primary/40 group-hover:border-primary/70 transition-colors ring-4 ring-primary/10">
                       <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     </div>
                   )} */}
-                  <div className="text-center space-y-3">
-                    <h4 className="font-bold text-xl text-foreground">{artist.name}</h4>
-                    <p className="text-primary text-sm font-medium">{artist.role}</p>
+                  <div className="text-center space-y-2 sm:space-y-3">
+                    <h4 className="font-bold text-lg sm:text-xl text-foreground">{artist.name}</h4>
+                    <p className="text-primary text-xs sm:text-sm font-medium">{artist.role}</p>
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                       <Globe className="h-3 w-3" />
                       {artist.location}
                     </p>
-                    <p className="text-sm italic text-foreground/70 leading-relaxed pt-2">{artist.specialty}</p>
+                    <p className="text-xs sm:text-sm italic text-foreground/70 leading-relaxed pt-1 sm:pt-2">{artist.specialty}</p>
                   </div>
                 </Card>
                 </motion.div>
@@ -763,30 +787,30 @@ const Index = () => {
       </section>
 
       {/* Upcoming Events */}
-      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             variants={fadeUpVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-20"
+            className="text-center mb-12 sm:mb-16 md:mb-20"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
               Upcoming Events • Hype Timeline
             </motion.h2>
             <motion.p 
-              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2"
               variants={subtitleVariants}
             >
               Network with visionaries, demo bleeding-edge tech, and co-create the industry's tomorrow
             </motion.p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {[
               {
                 name: "VFX Summit 2026: Bangalore",
@@ -820,14 +844,14 @@ const Index = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Calendar className="h-5 w-5 text-primary" />
+                  <Card className="p-4 sm:p-6 md:p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     <span className="text-xs text-primary font-semibold uppercase tracking-wider">{event.type}</span>
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold mb-4 text-foreground leading-tight">{event.name}</h3>
-                  <p className="text-sm text-primary italic mb-4 font-medium">{event.tagline}</p>
-                  <p className="text-sm text-muted-foreground mb-6">{event.dates}</p>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-foreground leading-tight">{event.name}</h3>
+                  <p className="text-xs sm:text-sm text-primary italic mb-3 sm:mb-4 font-medium">{event.tagline}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">{event.dates}</p>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
@@ -847,30 +871,30 @@ const Index = () => {
       </section>
 
       {/* Latest Industry News */}
-      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-background to-card">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-card">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             variants={fadeUpVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-20"
+            className="text-center mb-12 sm:mb-16 md:mb-20"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
               Latest Industry Pulse
             </motion.h2>
             <motion.p 
-              className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed px-2"
               variants={subtitleVariants}
             >
               Stay ahead of the VFX revolution
             </motion.p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
             {[
               {
                 headline: "Adobe's New AI Upscaler Shatters Render Times",
@@ -906,13 +930,13 @@ const Index = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <Card className="p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full cursor-pointer bg-card/50 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Newspaper className="h-5 w-5 text-primary" />
+                  <Card className="p-4 sm:p-6 md:p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full cursor-pointer bg-card/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <Newspaper className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     <span className="text-xs text-primary font-semibold uppercase tracking-wider">{news.category}</span>
                   </div>
-                  <h3 className="font-bold text-xl mb-3 text-foreground group-hover:text-primary/90 transition-colors leading-tight">{news.headline}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{news.teaser}</p>
+                  <h3 className="font-bold text-lg sm:text-xl mb-2 sm:mb-3 text-foreground group-hover:text-primary/90 transition-colors leading-tight">{news.headline}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{news.teaser}</p>
                 </Card>
                 </motion.div>
               </motion.div>
@@ -929,7 +953,7 @@ const Index = () => {
       </section>
 
       {/* AI Revolution Section */}
-      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card to-background relative overflow-hidden">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img src={aiNeural2} alt="AI Neural Network" className="w-full h-full object-cover" />
         </div>
@@ -940,16 +964,16 @@ const Index = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-20"
+            className="text-center mb-12 sm:mb-16 md:mb-20"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold red-glow-intense mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow-intense mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
               AI: The Cosmic Catalyst Reshaping VFX
             </motion.h2>
             <motion.p 
-              className="text-lg md:text-xl text-muted-foreground"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground px-2"
               variants={subtitleVariants}
             >
               Automate Complex Tasks • Amplify Creative Output • Scale Production Power
@@ -1052,9 +1076,9 @@ const Index = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-6 lg:px-8 bg-background border-y border-primary/10">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background border-y border-primary/10">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
             {[
               { value: 500, suffix: "+", label: "Global Creators", icon: Users },
               { value: 10, suffix: "+", label: "Countries", icon: Globe },
@@ -1074,11 +1098,11 @@ const Index = () => {
                 whileHover={{ scale: 1.05, y: -5 }}
                 className="text-center group"
               >
-                <stat.icon className="h-12 w-12 text-primary mx-auto mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] group-hover:scale-110 transition-transform duration-300" />
-                <h3 className="text-4xl md:text-5xl font-bold red-glow mb-3">
+                <stat.icon className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-primary mx-auto mb-3 sm:mb-4 md:mb-6 drop-shadow-[0_0_15px_hsl(var(--primary)/0.5)] group-hover:scale-110 transition-transform duration-300" />
+                <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold red-glow mb-2 sm:mb-3">
                   <AnimatedStatValue value={stat.value} suffix={stat.suffix} />
                 </h3>
-                <p className="text-muted-foreground text-sm md:text-base">{stat.label}</p>
+                <p className="text-muted-foreground text-xs sm:text-sm md:text-base">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -1086,7 +1110,7 @@ const Index = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-16 px-6 lg:px-8 bg-gradient-to-b from-card via-background to-background relative overflow-hidden">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card via-background to-background relative overflow-hidden">
         <div className="absolute inset-0">
           <img src={eventFuture} alt="Future Event" className="w-full h-full object-cover opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
@@ -1098,22 +1122,22 @@ const Index = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="space-y-10"
+            className="space-y-6 sm:space-y-8 md:space-y-10"
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-7xl font-bold red-glow-intense mb-8 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-bold red-glow-intense mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
               variants={headerVariants}
             >
               In Pikxora, Every Pixel Pulses with Purpose
             </motion.h2>
             <motion.p 
-              className="text-xl md:text-2xl lg:text-3xl font-light mb-10 leading-relaxed"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-light mb-6 sm:mb-8 md:mb-10 leading-relaxed px-2"
               variants={subtitleVariants}
             >
               <span className="text-primary font-semibold">Crafted in India</span> • <span className="text-foreground">Conquering the Cosmos</span>
             </motion.p>
             <motion.p 
-              className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-16 leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-8 sm:mb-12 md:mb-16 leading-relaxed px-2"
               initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
               whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: false, margin: "-100px" }}
@@ -1127,7 +1151,7 @@ const Index = () => {
               and every artist finds their voice in the global VFX symphony.
             </motion.p>
             <motion.div 
-              className="flex flex-col sm:flex-row gap-6 justify-center"
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-2"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-100px" }}
@@ -1137,27 +1161,27 @@ const Index = () => {
                 ease: [0.16, 1, 0.3, 1]
               }}
             >
-              <Link to="/auth">
+              <Link to="/auth" className="w-full sm:w-auto">
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button size="lg" className="text-base md:text-lg px-10 py-7 rounded-lg group shadow-xl hover:shadow-2xl transition-all">
-                    <Rocket className="mr-2 h-6 w-6 group-hover:animate-pulse" />
+                  <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base md:text-lg px-6 sm:px-8 md:px-10 py-5 sm:py-6 md:py-7 rounded-lg group shadow-xl hover:shadow-2xl transition-all">
+                    <Rocket className="mr-2 h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 group-hover:animate-pulse" />
                     Launch Your Journey
-                    <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </motion.div>
               </Link>
-              <Link to="/browse">
+              <Link to="/browse" className="w-full sm:w-auto">
                 <motion.div
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button size="lg" variant="outline" className="text-base md:text-lg px-10 py-7 rounded-lg border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
-                    <Globe className="mr-2 h-6 w-6" />
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base md:text-lg px-6 sm:px-8 md:px-10 py-5 sm:py-6 md:py-7 rounded-lg border-primary/40 hover:bg-primary/10 hover:border-primary/60 transition-all">
+                    <Globe className="mr-2 h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                     Explore the Universe
                   </Button>
                 </motion.div>
