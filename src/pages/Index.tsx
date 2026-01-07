@@ -363,7 +363,7 @@ const Index = () => {
           animate={{ y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="container max-w-9xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+          <div className="container max-w-9xl px-2 sm:px-6 lg:px-2 py-3 sm:py-4 flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2 sm:gap-3">
                 <div className="relative">
                   <img
