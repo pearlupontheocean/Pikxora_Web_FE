@@ -342,19 +342,19 @@ const Index = () => {
         </div>
 
         {/* Floating Nav */}
-        <div className="absolute inset-x-0 top-0 z-20 mt-[-120px]">
-          <div className="container  max-w-10xl px-4 lg:px-8 py-6 flex items-center justify-between">
+        <div className="fixed inset-x-0 top-0 z-50 bg-transparent">
+          <div className="container max-w-7xl px-2 lg:px-2 py-3 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="relative ml-[-70px] border-none">
+              <div className="relative ">
                 <img
                   src={logo}
                   alt="Pikxora logo"
-                  className="h-80 md:h-82 w-100 object-cover bg-inherit"
+                  className="h-24 w-auto object-cover"
                 />
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center gap-4 mr-[-30px] mt-[-20px]">
+            <div className="flex items-center gap-4">
               <div className="relative min-w-[140px] h-[44px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   {!userLoading && currentUser?.user ? (
