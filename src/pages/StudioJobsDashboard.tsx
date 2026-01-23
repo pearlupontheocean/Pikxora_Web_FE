@@ -9,15 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { useJobs, useMyBids } from '@/lib/api-hooks';
-import { type Job, type Bid } from '@/types/jobs';
+import { useJobs, useMyBids, useMyJobApplications, useCurrentUser } from '@/lib/api-hooks';
+import { type Job, type Bid, type JobApplication } from '@/types/jobs';
+import { Briefcase } from 'lucide-react';
 
 const StudioJobsDashboard = () => {
   const navigate = useNavigate();
 
+  const { data: currentUser } = useCurrentUser();
   const { data: postedJobs, isLoading: jobsLoading } = useJobs({ created_by_me: true });
   const { data: assignedJobs, isLoading: assignedJobsLoading } = useJobs({ assigned_to_me: true });
   const { data: myBids, isLoading: bidsLoading } = useMyBids();
+  const { data: myApplications, isLoading: applicationsLoading } = useMyJobApplications();
+
+  // Check if user can create jobs (only studios and admins)
+  const canCreateJob = currentUser?.user?.roles?.includes('studio') || currentUser?.user?.roles?.includes('admin');
 
   const formatCurrency = (amount: number, currency: string = 'INR') => {
     return new Intl.NumberFormat('en-IN', {
@@ -69,19 +75,43 @@ const StudioJobsDashboard = () => {
     }
   };
 
+  const getApplicationStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'pending': return 'secondary';
+      case 'reviewed': return 'outline';
+      case 'shortlisted': return 'default';
+      case 'rejected': return 'destructive';
+      case 'hired': return 'default';
+      default: return 'outline';
+    }
+  };
+
+  const getApplicationStatusIcon = (status: string) => {
+    switch (status) {
+      case 'hired': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'rejected': return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'pending': return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'reviewed': return <Eye className="h-4 w-4 text-blue-600" />;
+      case 'shortlisted': return <AlertCircle className="h-4 w-4 text-blue-600" />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">project Management</h1>
+          <h1 className="text-3xl font-bold">Project Management</h1>
           <p className="text-muted-foreground mt-2">
             Manage your posted projects and track your bids
           </p>
         </div>
-        <Button onClick={() => navigate('/jobs/create')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create project
-        </Button>
+        {canCreateJob && (
+          <Button onClick={() => navigate('/jobs/create')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Project
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="posted" className="space-y-6">
@@ -89,6 +119,7 @@ const StudioJobsDashboard = () => {
           <TabsTrigger value="posted">Posted Projects</TabsTrigger>
           <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
           <TabsTrigger value="bids">My Bids</TabsTrigger>
+          <TabsTrigger value="applications">My Applications</TabsTrigger>
         </TabsList>
 
         {/* Posted Jobs Tab */}
@@ -342,6 +373,107 @@ const StudioJobsDashboard = () => {
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View project
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* My Applications Tab - For Studio Jobs */}
+        <TabsContent value="applications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Jobs You've Applied To
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {applicationsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : myApplications?.length === 0 ? (
+                <div className="text-center py-8">
+                  <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No applications yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Browse available studio jobs and apply for positions that match your skills.
+                  </p>
+                  <Button onClick={() => navigate('/jobs')}>
+                    Browse Studio Jobs
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Job Title</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Expected Salary</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Applied On</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {myApplications?.map((application: JobApplication) => (
+                      <TableRow key={application._id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {typeof application.job_id === 'object' ? application.job_id.title : 'Job'}
+                            </p>
+                            {application.cover_letter && (
+                              <p className="text-sm text-muted-foreground line-clamp-1">
+                                {application.cover_letter}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {typeof application.job_id === 'object' && application.job_id.created_by ? (
+                            <span className="text-sm">
+                              {typeof application.job_id.created_by === 'object' 
+                                ? application.job_id.created_by.email 
+                                : application.job_id.created_by}
+                            </span>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {application.expected_salary ? (
+                            <div className="font-medium">
+                              {formatCurrency(application.expected_salary, application.currency)}
+                              <span className="text-xs text-muted-foreground">/year</span>
+                            </div>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getApplicationStatusIcon(application.status)}
+                            <Badge variant={getApplicationStatusBadgeVariant(application.status) as any}>
+                              {application.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(application.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/jobs/${typeof application.job_id === 'object' ? application.job_id._id : application.job_id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Job
                           </Button>
                         </TableCell>
                       </TableRow>
