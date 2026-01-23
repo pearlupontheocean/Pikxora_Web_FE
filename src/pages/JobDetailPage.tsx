@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Calendar,
   Clock,
-  FileText,
   Loader2,
   Plus,
   Trash2
@@ -21,10 +20,12 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useBidsForJob, useCreateBid, useCurrentUser, useJob, useUpdateBidStatus, useUserProfile } from '@/lib/api-hooks';
+import { useBidsForJob, useCreateBid, useCurrentUser, useJob, useUpdateBidStatus, useUserProfile, useApplyForJob, useCheckJobApplication, useJobApplications, useUpdateJobApplicationStatus, usePublishJob } from '@/lib/api-hooks';
 import { bidCreateSchema, type BidCreateFormData } from '@/lib/validations/jobs';
-import { type Bid, type CurrentUser } from '@/types/jobs';
+import { type Bid, type CurrentUser, type JobApplication } from '@/types/jobs';
 import { useQuery } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,10 +42,14 @@ const JobDetailPage = () => {
   };
 
   const { data: currentUser } = useCurrentUser() as { data: CurrentUser | undefined };
-  const { data: job, isLoading: jobLoading, error: jobError } = useJob(id!);
+  const hasToken = !!localStorage.getItem('token');
+  
+  // Use public endpoint if user is not authenticated
+  const { data: job, isLoading: jobLoading, error: jobError } = useJob(id!, !hasToken);
   const { data: bids, isLoading: bidsLoading } = useBidsForJob(id!);
   const createBidMutation = useCreateBid();
   const updateBidStatusMutation = useUpdateBidStatus();
+  const publishJobMutation = usePublishJob();
   
   // Updated state for bid actions in dialog
   const [selectedBidderId, setSelectedBidderId] = useState<string | null>(null);
@@ -55,6 +60,20 @@ const JobDetailPage = () => {
   const [awardedBidDetailsDialogOpen, setAwardedBidDetailsDialogOpen] = useState(false);
   
   const { data: selectedBidderProfile, isLoading: selectedBidderLoading } = useUserProfile(selectedBidderId!);
+
+  // Job Application hooks (for Studio Jobs)
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [applicationsDialogOpen, setApplicationsDialogOpen] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [expectedSalary, setExpectedSalary] = useState<string>('');
+  const [noticePeriod, setNoticePeriod] = useState<string>('immediate');
+  const [applicantEmail, setApplicantEmail] = useState<string>('');
+  const [applicantPhone, setApplicantPhone] = useState<string>('');
+  
+  const applyForJobMutation = useApplyForJob();
+  const { data: applicationCheck, isLoading: applicationCheckLoading } = useCheckJobApplication(id!);
+  const { data: jobApplications, isLoading: applicationsLoading } = useJobApplications(id!);
+  const updateApplicationStatusMutation = useUpdateJobApplicationStatus();
 
   const {
     register: bidRegister,
@@ -144,6 +163,79 @@ const JobDetailPage = () => {
     return job.created_by._id === currentUser.user.id;
   };
 
+  // Check if user can apply for studio jobs (only artists can apply)
+  const canUserApply = () => {
+    if (!currentUser || !currentUser.user || !currentUser.user.roles || !job) return false;
+    return currentUser.user.roles.includes('artist') &&
+           job.job_type === 'job' &&
+           job.status === 'open' &&
+           job.created_by._id !== currentUser.user.id &&
+           !applicationCheck?.hasApplied;
+  };
+
+  const handleApplySubmit = async () => {
+    // Validate required fields
+    if (!applicantEmail.trim()) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    if (!applicantPhone.trim()) {
+      toast.error('Please enter your phone number');
+      return;
+    }
+
+    try {
+      const applicationData = {
+        job_id: id!,
+        applicant_email: applicantEmail.trim(),
+        applicant_phone: applicantPhone.trim(),
+        cover_letter: coverLetter,
+        expected_salary: expectedSalary ? parseFloat(expectedSalary) : undefined,
+        notice_period: noticePeriod,
+      };
+      console.log('Submitting application with data:', applicationData);
+      await applyForJobMutation.mutateAsync(applicationData);
+      toast.success('Application submitted successfully!');
+      setApplyDialogOpen(false);
+      setCoverLetter('');
+      setExpectedSalary('');
+      setNoticePeriod('immediate');
+      setApplicantEmail('');
+      setApplicantPhone('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to submit application');
+    }
+  };
+
+  const handleUpdateApplicationStatus = async (applicationId: string, status: string) => {
+    try {
+      await updateApplicationStatusMutation.mutateAsync({ id: applicationId, status });
+      toast.success(`Application ${status}`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to update application status');
+    }
+  };
+
+  const getApplicationStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending': return 'secondary';
+      case 'reviewed': return 'outline';
+      case 'shortlisted': return 'default';
+      case 'rejected': return 'destructive';
+      case 'hired': return 'default';
+      default: return 'outline';
+    }
+  };
+
+  const handlePublishJob = async () => {
+    try {
+      await publishJobMutation.mutateAsync(id!);
+      toast.success('Job published successfully! It is now visible to other users.');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to publish job');
+    }
+  };
+
   const handleBidSubmit = async (data: BidCreateFormData) => {
     try {
       const bidData = {
@@ -221,6 +313,30 @@ const JobDetailPage = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
+      {/* Draft status banner for job owner */}
+      {hasToken && isJobOwner() && job.status === 'draft' && (
+        <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold text-yellow-600 dark:text-yellow-400">This job is in draft mode</p>
+            <p className="text-sm text-muted-foreground">It's only visible to you. Publish it to make it visible to other users.</p>
+          </div>
+          <Button 
+            className="bg-green-600 hover:bg-green-700 flex-shrink-0"
+            onClick={handlePublishJob}
+            disabled={publishJobMutation.isPending}
+          >
+            {publishJobMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Publishing...
+              </>
+            ) : (
+              'Publish Now'
+            )}
+          </Button>
+        </div>
+      )}
+
       {/* Job Header - Reduced spacing */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-0 mb-4">
@@ -235,7 +351,149 @@ const JobDetailPage = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto">
-            {canUserBid() && (
+            {/* Publish button for job owner with draft jobs */}
+            {hasToken && isJobOwner() && job?.status === 'draft' && (
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+                onClick={handlePublishJob}
+                disabled={publishJobMutation.isPending}
+              >
+                {publishJobMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  'Publish Job'
+                )}
+              </Button>
+            )}
+            {!hasToken && job?.status === 'open' && job?.assignment_mode === 'open' ? (
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto flex-1 sm:flex-none"
+                onClick={() => {
+                  toast.info('Please login to apply for this job');
+                  navigate('/auth');
+                }}
+              >
+                Login to Apply
+              </Button>
+            ) : canUserApply() ? (
+              /* Apply button for Studio Jobs */
+              <Dialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="w-full sm:w-auto flex-1 sm:flex-none">
+                    Apply for Job
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold">Apply for "{job.title}"</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="applicant_email" className="text-sm font-medium">
+                          Email Address <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="applicant_email"
+                          type="email"
+                          placeholder="your@email.com"
+                          className="mt-1"
+                          value={applicantEmail}
+                          onChange={(e) => setApplicantEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="applicant_phone" className="text-sm font-medium">
+                          Phone Number <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="applicant_phone"
+                          type="tel"
+                          placeholder="+91 98765 43210"
+                          className="mt-1"
+                          value={applicantPhone}
+                          onChange={(e) => setApplicantPhone(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="cover_letter" className="text-sm font-medium">Cover Letter</Label>
+                      <Textarea
+                        id="cover_letter"
+                        placeholder="Tell us why you're a great fit for this role..."
+                        className="mt-1 min-h-[100px]"
+                        value={coverLetter}
+                        onChange={(e) => setCoverLetter(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="expected_salary" className="text-sm font-medium">Expected Salary (per year)</Label>
+                        <Input
+                          id="expected_salary"
+                          type="number"
+                          placeholder="e.g., 800000"
+                          className="mt-1"
+                          value={expectedSalary}
+                          onChange={(e) => setExpectedSalary(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="notice_period" className="text-sm font-medium">Notice Period</Label>
+                        <Select value={noticePeriod} onValueChange={setNoticePeriod}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="immediate">Immediate</SelectItem>
+                            <SelectItem value="15_days">15 Days</SelectItem>
+                            <SelectItem value="30_days">30 Days</SelectItem>
+                            <SelectItem value="60_days">60 Days</SelectItem>
+                            <SelectItem value="90_days">90 Days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setApplyDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleApplySubmit}
+                      disabled={applyForJobMutation.isPending || isUploadingResume}
+                    >
+                      {applyForJobMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : isUploadingResume ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading Resume...
+                        </>
+                      ) : (
+                        'Submit Application'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            ) : applicationCheck?.hasApplied ? (
+              <Button size="lg" variant="secondary" disabled className="w-full sm:w-auto flex-1 sm:flex-none">
+                Already Applied
+              </Button>
+            ) : canUserBid() ? (
               <Dialog open={bidDialogOpen} onOpenChange={setBidDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="lg" className="w-full sm:w-auto flex-1 sm:flex-none">
@@ -397,7 +655,7 @@ const JobDetailPage = () => {
                   </form>
                 </DialogContent>
               </Dialog>
-            )}
+            ) : null}
             <Button
               variant="outline"
               size="lg"
@@ -406,7 +664,7 @@ const JobDetailPage = () => {
             >
               Back to Projects
             </Button>
-            {isJobOwner() && (
+            {hasToken && isJobOwner() && (
               <Button
                 size="lg"
                 onClick={() => navigate(`/jobs/${id}/edit`)}
@@ -493,6 +751,7 @@ const JobDetailPage = () => {
               <CardTitle className="text-lg font-semibold">Requirements</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {job.required_skills && job.required_skills.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">Required Skills</Label>
                 <div className="flex flex-wrap gap-1.5">
@@ -503,6 +762,7 @@ const JobDetailPage = () => {
                   ))}
                 </div>
               </div>
+              )}
 
               {job.software_preferences && job.software_preferences.length > 0 && (
                 <div className="space-y-2">
@@ -517,6 +777,7 @@ const JobDetailPage = () => {
                 </div>
               )}
 
+              {job.deliverables && job.deliverables.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">Deliverables</Label>
                 <ul className="space-y-2 mt-2 pl-5 list-disc">
@@ -527,6 +788,7 @@ const JobDetailPage = () => {
                   ))}
                 </ul>
               </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -536,15 +798,30 @@ const JobDetailPage = () => {
           {/* Budget & Schedule */}
           <Card className="w-full">
             <CardHeader className="pb-3 pt-4">
-              <CardTitle className="text-lg font-semibold">Budget & Schedule</CardTitle>
+              <CardTitle className="text-lg font-semibold">
+                {job.job_type === 'job' ? 'Package Details' : 'Budget & Schedule'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Studio Jobs: Show Package Per Year */}
+              {job.job_type === 'job' && job.package_per_year && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Package Per Year</Label>
+                  <p className="font-semibold text-lg break-words">
+                    {formatCurrency(job.package_per_year, job.currency || 'INR')}
+                  </p>
+                </div>
+              )}
+
+              {/* Freelance Jobs: Show Payment Type and Budget */}
+              {job.job_type !== 'job' && job.payment_type && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Payment Type</Label>
                 <p className="font-semibold text-base capitalize">{job.payment_type.replace('_', ' ')}</p>
               </div>
+              )}
 
-              {(job.min_budget || job.max_budget) && (
+              {job.job_type !== 'job' && (job.min_budget || job.max_budget) && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Budget Range</Label>
                   <p className="font-semibold text-lg break-words">
@@ -556,6 +833,26 @@ const JobDetailPage = () => {
                     }
                   </p>
                 </div>
+              )}
+
+              {/* Hourly Rate & Estimated Hours for hourly payment */}
+              {job.job_type !== 'job' && job.payment_type === 'hourly' && (
+                <>
+                  {job.hourly_rate && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Hourly Rate</Label>
+                      <p className="font-semibold text-base">
+                        {formatCurrency(job.hourly_rate, job.currency || 'INR')}/hr
+                      </p>
+                    </div>
+                  )}
+                  {job.estimated_hours && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Estimated Hours</Label>
+                      <p className="font-semibold text-base">{job.estimated_hours} hours</p>
+                    </div>
+                  )}
+                </>
               )}
 
               {job.bid_deadline && job.status === 'open' && (
@@ -581,7 +878,7 @@ const JobDetailPage = () => {
           </Card>
 
           {/* Awarded Job Details (for job owner) */}
-          {isJobOwner() && job.status === 'awarded' && (
+          {hasToken && isJobOwner() && job.status === 'awarded' && (
             <Card className="w-full cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setAwardedBidDetailsDialogOpen(true)}>
               <CardHeader className="pb-3 pt-4">
                 <CardTitle className="text-lg font-semibold">Awarded Bid Details</CardTitle>
@@ -608,8 +905,166 @@ const JobDetailPage = () => {
             </Card>
           )}
 
+          {/* Job Applications Management - For Studio Jobs */}
+          {hasToken && isJobOwner() && job.job_type === 'job' && job.status === 'open' && (
+            <Card className="w-full">
+              <CardHeader className="pb-3 pt-4">
+                <CardTitle className="text-lg font-semibold flex items-center justify-between">
+                  Applications
+                  <Badge variant="secondary" className="text-xs">
+                    {jobApplications?.length || 0} applicant{(jobApplications?.length || 0) !== 1 ? 's' : ''}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {applicationsLoading ? (
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : jobApplications && jobApplications.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    <div className="divide-y divide-border">
+                      {jobApplications.map((application: JobApplication) => (
+                        <div
+                          key={application._id}
+                          className="p-3 hover:bg-muted/60 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10 flex-shrink-0">
+                              <AvatarImage src={application.applicant_profile?.avatar_url} />
+                              <AvatarFallback>
+                                {application.applicant_id.name?.[0] || application.applicant_id.email[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-semibold text-sm truncate">
+                                  {application.applicant_profile?.name || application.applicant_id.name || application.applicant_id.email}
+                                </p>
+                                <Badge
+                                  variant={getApplicationStatusBadge(application.status) as any}
+                                  className="text-[10px] px-2 py-0.5 flex-shrink-0"
+                                >
+                                  {application.status}
+                                </Badge>
+                              </div>
+                              {application.applicant_profile?.title && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {application.applicant_profile.title}
+                                </p>
+                              )}
+                              {/* Contact Info */}
+                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
+                                {application.applicant_email && (
+                                  <a href={`mailto:${application.applicant_email}`} className="hover:text-primary flex items-center gap-1">
+                                    📧 {application.applicant_email}
+                                  </a>
+                                )}
+                                {application.applicant_phone && (
+                                  <a href={`tel:${application.applicant_phone}`} className="hover:text-primary flex items-center gap-1">
+                                    📱 {application.applicant_phone}
+                                  </a>
+                                )}
+                              </div>
+                              {application.expected_salary && (
+                                <p className="text-xs text-muted-foreground">
+                                  Expected: {formatCurrency(application.expected_salary, application.currency)}
+                                </p>
+                              )}
+                              {application.cover_letter && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {application.cover_letter}
+                                </p>
+                              )}
+                              {/* Notice Period */}
+                              {application.notice_period && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Notice: {application.notice_period.replace('_', ' ')}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {application.status === 'pending' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'reviewed')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Mark Reviewed
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'shortlisted')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Shortlist
+                                    </Button>
+                                  </>
+                                )}
+                                {application.status === 'reviewed' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'shortlisted')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Shortlist
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'rejected')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                {application.status === 'shortlisted' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'hired')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Hire
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleUpdateApplicationStatus(application._id, 'rejected')}
+                                      disabled={updateApplicationStatusMutation.isPending}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    No applications yet
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Enhanced Bids Management - Compact list with scroll */}
-          {isJobOwner() && job.status === 'open' && bids && bids.length > 0 && (
+          {hasToken && isJobOwner() && job.job_type !== 'job' && job.status === 'open' && bids && bids.length > 0 && (
             <Card className="w-full">
               <CardHeader className="pb-3 pt-4">
                 <CardTitle className="text-lg font-semibold flex items-center justify-between">

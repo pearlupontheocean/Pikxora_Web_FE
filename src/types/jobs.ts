@@ -57,12 +57,16 @@ export interface Job {
   title: string;
   description: string;
   movie_id?: Movie;
-  assignment_mode: 'direct' | 'open';
+  job_type: 'job' | 'freelance';
+  package_per_year?: number; // For Studio Jobs
+  assignment_mode?: 'direct' | 'open'; // Required only for Freelance Jobs
   assigned_to?: User | User[]; // Can be single user (backward compatibility) or array of users
-  payment_type: 'fixed' | 'per_shot' | 'per_frame';
+  payment_type: 'fixed' | 'per_shot' | 'per_frame' | 'hourly';
   currency: string;
   min_budget?: number;
   max_budget?: number;
+  hourly_rate?: number;
+  estimated_hours?: number;
   total_shots?: number;
   total_frames?: number;
   resolution?: string;
@@ -123,6 +127,7 @@ export interface ContractSummary {
 
 export interface JobFilters {
   status?: string;
+  job_type?: 'job' | 'freelance';
   assignment_mode?: string;
   payment_type?: string;
   min_budget?: number;
@@ -159,12 +164,16 @@ export interface JobCreateData {
   title: string;
   description: string;
   movie_id?: string;
-  assignment_mode: 'direct' | 'open';
+  job_type: 'job' | 'freelance';
+  package_per_year?: number; // For Studio Jobs
+  assignment_mode?: 'direct' | 'open'; // Required only for Freelance Jobs
   assigned_to?: string | string[]; // Can be single user ID or array of user IDs
-  payment_type: 'fixed' | 'per_shot' | 'per_frame';
+  payment_type: 'fixed' | 'per_shot' | 'per_frame' | 'hourly';
   currency: string;
   min_budget?: number;
   max_budget?: number;
+  hourly_rate?: number;
+  estimated_hours?: number;
   total_shots?: number;
   total_frames?: number;
   resolution?: string;
@@ -192,5 +201,48 @@ export interface BidCreateData {
 
 export interface BidStatusUpdate {
   status: 'pending' | 'shortlisted' | 'accepted' | 'rejected';
+  notes?: string;
+}
+
+// Job Application types for Studio Jobs
+export interface JobApplication {
+  _id: string;
+  job_id: Job | string;
+  applicant_id: User;
+  applicant_profile?: {
+    _id: string;
+    name: string;
+    title?: string;
+    location?: string;
+    skills?: string[];
+    experience?: string;
+    rating?: number;
+    avatar_url?: string;
+    user_id: string;
+  };
+  applicant_email: string;
+  applicant_phone: string;
+  cover_letter?: string;
+  expected_salary?: number;
+  currency: string;
+  notice_period: 'immediate' | '15_days' | '30_days' | '60_days' | '90_days';
+  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobApplicationCreateData {
+  job_id: string;
+  applicant_email: string;
+  applicant_phone: string;
+  cover_letter?: string;
+  expected_salary?: number;
+  currency?: string;
+  notice_period?: 'immediate' | '15_days' | '30_days' | '60_days' | '90_days';
+}
+
+export interface JobApplicationStatusUpdate {
+  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
   notes?: string;
 }

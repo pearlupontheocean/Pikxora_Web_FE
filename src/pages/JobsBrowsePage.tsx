@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Calendar, DollarSign, Users, Clock } from 'lucide-react';
+import { Search, Filter, Calendar, DollarSign, Users, Clock, Briefcase, User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useJobs, useCurrentUser } from '@/lib/api-hooks';
 import { type JobFilters, type Job } from '@/types/jobs';
@@ -15,39 +16,26 @@ import { type JobFilters, type Job } from '@/types/jobs';
 const JobsBrowsePage = () => {
   const navigate = useNavigate();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const hasToken = !!localStorage.getItem('token');
 
+  const [activeTab, setActiveTab] = useState<'job' | 'freelance'>('job');
   const [filters, setFilters] = useState<JobFilters>({
-    status: 'open'
+    status: 'open',
+    job_type: 'job'
   });
 
-  const { data: jobs, isLoading, error, refetch, isFetching } = useJobs(filters);
+  // Update filters when tab changes
+  const handleTabChange = (value: string) => {
+    const newTab = value as 'job' | 'freelance';
+    setActiveTab(newTab);
+    setFilters(prev => ({
+      ...prev,
+      job_type: newTab
+    }));
+  };
 
-  // Check if user is authenticated
-  if (userLoading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Loading...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please Login</h1>
-          <p className="text-muted-foreground mb-4">
-            You need to be logged in to browse Projects.
-          </p>
-          <Button onClick={() => navigate('/auth')}>
-            Go to Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Use public endpoint if user is not authenticated
+  const { data: jobs, isLoading, error, refetch, isFetching } = useJobs(filters, !hasToken);
 
   const handleFilterChange = (key: keyof JobFilters, value: any) => {
     setFilters(prev => ({
@@ -57,7 +45,10 @@ const JobsBrowsePage = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ status: 'open' });
+    setFilters({ 
+      status: 'open',
+      job_type: activeTab
+    });
   };
 
   const formatCurrency = (amount: number, currency: string = 'INR') => {
@@ -129,6 +120,23 @@ const JobsBrowsePage = () => {
             </CardHeader>
             <CardContent className="space-y-4 p-6">
               <div>
+                <label className="text-sm font-medium">Job Type</label>
+                <Select
+                  value={filters.job_type || 'all'}
+                  onValueChange={(value) => handleFilterChange('job_type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="job">Studio Jobs</SelectItem>
+                    <SelectItem value="freelance">Freelance Jobs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <label className="text-sm font-medium">Status</label>
                 <Select
                   value={filters.status || 'all'}
@@ -196,7 +204,14 @@ const JobsBrowsePage = () => {
           <Card className="h-full">
             <CardContent className="p-0 h-full flex flex-col">
               <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold">Available projects</h3>
+                <h3 className="text-lg font-semibold">
+                  {activeTab === 'job' ? 'Available Studio Projects' : 'Available Freelance Opportunities'}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTab === 'job' 
+                    ? 'Browse studio projects and team-based VFX work'
+                    : 'Find freelance opportunities for individual contractors'}
+                </p>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent p-6 space-y-4">
                 {isLoading ? (
@@ -230,7 +245,7 @@ const JobsBrowsePage = () => {
                     </Card>
                   </div>
                 ) : (
-                  jobs?.slice(0, 2).map((job: Job) => (
+                  jobs?.map((job: Job) => (
                     <Card
                       key={job._id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
@@ -239,7 +254,12 @@ const JobsBrowsePage = () => {
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div>
-                            <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="text-xl font-semibold">{job.title}</h3>
+                              <Badge variant="outline" className="text-xs">
+                                {job.job_type === 'job' ? 'Studio' : 'Freelance'}
+                              </Badge>
+                            </div>
                             <p className="text-muted-foreground line-clamp-2">
                               {job.description}
                             </p>

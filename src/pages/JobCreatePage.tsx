@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
@@ -31,8 +31,19 @@ const JobCreatePage = () => {
   };
   const createJobMutation = useCreateJob();
   const publishJobMutation = usePublishJob();
-  const { data: currentUserData } = useCurrentUser();
+  const { data: currentUserData, isLoading: userLoading } = useCurrentUser();
   const { data: associations, isLoading: associationsLoading } = useMyAssociations();
+
+  // Check if user can create jobs (only studios and admins)
+  const canCreateJob = currentUserData?.user?.roles?.includes('studio') || currentUserData?.user?.roles?.includes('admin');
+
+  // Redirect non-authorized users
+  useEffect(() => {
+    if (!userLoading && currentUserData && !canCreateJob) {
+      toast.error('Only studios and admins can create jobs');
+      navigate('/jobs');
+    }
+  }, [userLoading, currentUserData, canCreateJob, navigate]);
 
   const [workType, setWorkType] = useState<string>('');
 
@@ -47,7 +58,8 @@ const JobCreatePage = () => {
     resolver: zodResolver(jobCreateSchema),
     defaultValues: {
       currency: 'INR',
-      assignment_mode: 'open',
+      job_type: 'job',
+      assignment_mode: undefined, // Will be set based on job_type
       payment_type: 'fixed',
       required_skills: [],
       software_preferences: [],
@@ -58,6 +70,8 @@ const JobCreatePage = () => {
   });
 
   const assignmentMode = watch('assignment_mode');
+  const jobType = watch('job_type') || 'job';
+  const paymentType = watch('payment_type');
   const currentUserId = currentUserData?.user?.id;
 
   // Extract association members (other users, not the current user)
@@ -117,6 +131,8 @@ const JobCreatePage = () => {
       // Convert comma-separated strings to arrays
       const processedData = {
         ...data,
+        // For studio jobs, always set assignment_mode to 'open'
+        assignment_mode: data.job_type === 'job' ? 'open' : data.assignment_mode,
         required_skills: data.required_skills?.length
           ? data.required_skills[0]?.split(',').map(s => s.trim()).filter(Boolean)
           : [],
@@ -152,6 +168,22 @@ const JobCreatePage = () => {
     }
   };
 
+  // Show loading while checking authorization
+  if (userLoading) {
+    return (
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authorized (will redirect via useEffect)
+  if (!canCreateJob) {
+    return null;
+  }
+
   return (
     <div className="container mx-auto px-6 py-8 max-w-4xl">
       <div className="mb-8">
@@ -178,6 +210,30 @@ const JobCreatePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
+              <Label htmlFor="job_type">Job Type *</Label>
+              <Select
+                value={watch('job_type') || 'job'}
+                onValueChange={(value) => setValue('job_type', value as 'job' | 'freelance')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select job type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="job">Job (Studio Project)</SelectItem>
+                  <SelectItem value="freelance">Freelance Job</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.job_type && (
+                <p className="text-sm text-destructive mt-1">{errors.job_type.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                {watch('job_type') === 'job' 
+                  ? 'Studio projects are typically larger, team-based VFX work'
+                  : 'Freelance jobs are smaller, individual contractor opportunities'}
+              </p>
+            </div>
+
+            <div>
               <Label htmlFor="title">Job Title *</Label>
               <Input
                 id="title"
@@ -202,25 +258,55 @@ const JobCreatePage = () => {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="workType">Work Type</Label>
-              <Select value={workType} onValueChange={setWorkType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select work type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vfx">VFX</SelectItem>
-                  <SelectItem value="animation">Animation</SelectItem>
-                  <SelectItem value="motion_graphics">Motion Graphics</SelectItem>
-                  <SelectItem value="compositing">Compositing</SelectItem>
-                  <SelectItem value="modeling">3D Modeling</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Movie Association - Only for Studio Jobs */}
+            {jobType === 'job' && (
+              <div>
+                <Label htmlFor="workType">Work Type</Label>
+                <Select value={workType} onValueChange={setWorkType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select work type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vfx">VFX</SelectItem>
+                    <SelectItem value="animation">Animation</SelectItem>
+                    <SelectItem value="motion_graphics">Motion Graphics</SelectItem>
+                    <SelectItem value="compositing">Compositing</SelectItem>
+                    <SelectItem value="modeling">3D Modeling</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Assignment Mode */}
+        {/* Package per Year - Only for Studio Jobs */}
+        {jobType === 'job' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Package Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="package_per_year">Package per Year *</Label>
+              <Input
+                id="package_per_year"
+                type="number"
+                {...register('package_per_year', { valueAsNumber: true })}
+                placeholder="e.g., 500000"
+              />
+              {errors.package_per_year && (
+                <p className="text-sm text-destructive mt-1">{errors.package_per_year.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Annual package amount for this studio project
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Assignment Mode - Only for Freelance Jobs */}
+        {jobType === 'freelance' && (
         <Card>
           <CardHeader>
             <CardTitle>Assignment</CardTitle>
@@ -325,8 +411,10 @@ const JobCreatePage = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
-        {/* Budget & Payment */}
+        {/* Budget & Payment - Only for Freelance Jobs */}
+        {jobType === 'freelance' && (
         <Card>
           <CardHeader>
             <CardTitle>Budget & Payment</CardTitle>
@@ -341,8 +429,14 @@ const JobCreatePage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fixed">Fixed Price</SelectItem>
-                    <SelectItem value="per_shot">Per Shot</SelectItem>
-                    <SelectItem value="per_frame">Per Frame</SelectItem>
+                    {jobType === 'job' ? (
+                      <>
+                        <SelectItem value="per_shot">Per Shot</SelectItem>
+                        <SelectItem value="per_frame">Per Frame</SelectItem>
+                      </>
+                    ) : (
+                      <SelectItem value="hourly">Hourly Rate</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 {errors.payment_type && (
@@ -364,36 +458,78 @@ const JobCreatePage = () => {
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="min_budget">Min Budget</Label>
-                <Input
-                  id="min_budget"
-                  type="number"
-                  {...register('min_budget', { valueAsNumber: true })}
-                  placeholder="0"
-                />
-                {errors.min_budget && (
-                  <p className="text-sm text-destructive mt-1">{errors.min_budget.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="max_budget">Max Budget</Label>
-              <Input
-                id="max_budget"
-                type="number"
-                {...register('max_budget', { valueAsNumber: true })}
-                placeholder="Enter maximum budget"
-              />
-              {errors.max_budget && (
-                <p className="text-sm text-destructive mt-1">{errors.max_budget.message}</p>
+              {/* Show different fields based on payment type */}
+              {paymentType === 'hourly' ? (
+                <>
+                  <div>
+                    <Label htmlFor="hourly_rate">Hourly Rate *</Label>
+                    <Input
+                      id="hourly_rate"
+                      type="number"
+                      {...register('hourly_rate', { valueAsNumber: true })}
+                      placeholder="e.g., 50"
+                    />
+                    {errors.hourly_rate && (
+                      <p className="text-sm text-destructive mt-1">{errors.hourly_rate.message}</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <Label htmlFor="min_budget">Min Budget</Label>
+                  <Input
+                    id="min_budget"
+                    type="number"
+                    {...register('min_budget', { valueAsNumber: true })}
+                    placeholder="0"
+                  />
+                  {errors.min_budget && (
+                    <p className="text-sm text-destructive mt-1">{errors.min_budget.message}</p>
+                  )}
+                </div>
               )}
             </div>
+
+            {/* Show estimated hours for hourly payment */}
+            {paymentType === 'hourly' && (
+              <div>
+                <Label htmlFor="estimated_hours">Estimated Hours *</Label>
+                <Input
+                  id="estimated_hours"
+                  type="number"
+                  {...register('estimated_hours', { valueAsNumber: true })}
+                  placeholder="e.g., 40"
+                />
+                {errors.estimated_hours && (
+                  <p className="text-sm text-destructive mt-1">{errors.estimated_hours.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Estimated total hours for this project
+                </p>
+              </div>
+            )}
+
+            {/* Show max budget for non-hourly payments */}
+            {paymentType !== 'hourly' && (
+              <div>
+                <Label htmlFor="max_budget">Max Budget</Label>
+                <Input
+                  id="max_budget"
+                  type="number"
+                  {...register('max_budget', { valueAsNumber: true })}
+                  placeholder="Enter maximum budget"
+                />
+                {errors.max_budget && (
+                  <p className="text-sm text-destructive mt-1">{errors.max_budget.message}</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
+        )}
 
-        {/* VFX Specifications */}
+        {/* VFX Specifications - Only for Freelance Jobs */}
+        {jobType === 'freelance' && (
         <Card>
           <CardHeader>
             <CardTitle>VFX Specifications</CardTitle>
@@ -533,6 +669,7 @@ const JobCreatePage = () => {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Requirements & Deliverables */}
         <Card>
@@ -603,14 +740,15 @@ const JobCreatePage = () => {
           </CardContent>
         </Card>
 
-        {/* Schedule & Notes */}
+        {/* Schedule & Notes - Only for Freelance Jobs */}
+        {jobType === 'freelance' && (
         <Card>
           <CardHeader>
             <CardTitle>Schedule & Notes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {  (
+              {assignmentMode === 'open' && (
                 <div>
                   <Label htmlFor="bid_deadline">Bid Deadline *</Label>
                   <Input
@@ -657,6 +795,7 @@ const JobCreatePage = () => {
             </div>
           </CardContent>
         </Card>
+        )}
 
         <Separator />
 

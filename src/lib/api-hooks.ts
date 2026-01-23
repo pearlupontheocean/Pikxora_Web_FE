@@ -423,9 +423,12 @@ export const useUserProfile = (userId: string) => {
 };
 
 // Jobs API hooks
-export const useJobs = (filters: JobFilters = {}) => {
+export const useJobs = (filters: JobFilters = {}, publicAccess: boolean = false) => {
+  const hasToken = !!localStorage.getItem('token');
+  const usePublicEndpoint = publicAccess || !hasToken;
+  
   return useQuery({
-    queryKey: ['jobs', filters],
+    queryKey: ['jobs', filters, usePublicEndpoint ? 'public' : 'private'],
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -434,18 +437,23 @@ export const useJobs = (filters: JobFilters = {}) => {
         }
       });
 
-      const response = await axiosInstance.get(`/jobs?${params}`);
+      const endpoint = usePublicEndpoint ? `/jobs/public?${params}` : `/jobs?${params}`;
+      const response = await axiosInstance.get(endpoint);
       return response.data as Job[];
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
-export const useJob = (id: string) => {
+export const useJob = (id: string, publicAccess: boolean = false) => {
+  const hasToken = !!localStorage.getItem('token');
+  const usePublicEndpoint = publicAccess || !hasToken;
+  
   return useQuery({
-    queryKey: ['job', id],
+    queryKey: ['job', id, usePublicEndpoint ? 'public' : 'private'],
     queryFn: async () => {
-      const response = await axiosInstance.get(`/jobs/${id}`);
+      const endpoint = usePublicEndpoint ? `/jobs/${id}/public` : `/jobs/${id}`;
+      const response = await axiosInstance.get(endpoint);
       return response.data as Job;
     },
     enabled: !!id,
@@ -498,13 +506,15 @@ export const usePublishJob = () => {
 };
 
 export const useBidsForJob = (jobId: string) => {
+  const hasToken = !!localStorage.getItem('token');
+  
   return useQuery({
     queryKey: ['bids', 'job', jobId],
     queryFn: async () => {
       const response = await axiosInstance.get(`/bids/job/${jobId}`);
       return response.data as Bid[];
     },
-    enabled: !!jobId,
+    enabled: !!jobId && hasToken, // Only fetch bids if user is authenticated
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
@@ -666,6 +676,98 @@ export const useRemoveAssociation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myAssociations'] });
+    },
+  });
+};
+
+// Job Application hooks (for Studio Jobs)
+export const useApplyForJob = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      job_id: string;
+      applicant_email: string;
+      applicant_phone: string;
+      cover_letter?: string;
+      expected_salary?: number;
+      currency?: string;
+      notice_period?: string;
+    }) => {
+      const response = await axiosInstance.post('/job-applications', data);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['jobApplication', 'check', variables.job_id] });
+      queryClient.invalidateQueries({ queryKey: ['myJobApplications'] });
+    },
+  });
+};
+
+export const useCheckJobApplication = (jobId: string) => {
+  const hasToken = !!localStorage.getItem('token');
+
+  return useQuery({
+    queryKey: ['jobApplication', 'check', jobId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/job-applications/check/${jobId}`);
+      return response.data as { hasApplied: boolean; application: any | null };
+    },
+    enabled: !!jobId && hasToken,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useJobApplications = (jobId: string) => {
+  const hasToken = !!localStorage.getItem('token');
+
+  return useQuery({
+    queryKey: ['jobApplications', jobId],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/job-applications/job/${jobId}`);
+      return response.data;
+    },
+    enabled: !!jobId && hasToken,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+};
+
+export const useMyJobApplications = () => {
+  return useQuery({
+    queryKey: ['myJobApplications'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/job-applications/my');
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useUpdateJobApplicationStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+      const response = await axiosInstance.put(`/job-applications/${id}/status`, { status, notes });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobApplications'] });
+    },
+  });
+};
+
+export const useWithdrawJobApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.delete(`/job-applications/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myJobApplications'] });
+      queryClient.invalidateQueries({ queryKey: ['jobApplication'] });
     },
   });
 };
