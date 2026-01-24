@@ -363,19 +363,19 @@ const Index = () => {
           animate={{ y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="container px-0  py-3 sm:py-4 flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2 sm:gap-3">
+          <div className="w-full px-3 xs:px-4 sm:px-6 md:px-8 lg:px-10 xl:px-0 2xl:px-0 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 flex items-center justify-between max-w-[1920px] mx-auto">
+              <Link to="/" className="flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 flex-shrink-0">
                 <div className="relative">
                   <img
                     src={logo}
                     alt="Pikxora logo"
-                    className="h-12 sm:h-14 md:h-16 lg:h-18 xl:h-20 w-auto object-cover transition-all duration-300"
+                    className="h-10 xs:h-11 sm:h-12 md:h-14 lg:h-16 xl:h-[4.5rem] 2xl:h-20 w-auto object-contain transition-all duration-300"
                   />
                 </div>
               </Link>
 
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="relative min-w-[100px] sm:min-w-[140px] h-[36px] sm:h-[44px] flex items-center justify-center">
+            <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-4">
+              <div className="relative min-w-[80px] xs:min-w-[90px] sm:min-w-[110px] md:min-w-[130px] lg:min-w-[150px] h-[32px] xs:h-[36px] sm:h-[40px] md:h-[44px] lg:h-[48px] flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   {!userLoading && currentUser?.user ? (
                     <motion.div
@@ -387,14 +387,14 @@ const Index = () => {
                     >
                       <Button
                         onClick={() => navigate("/dashboard")}
-                        className="px-3 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full bg-black border border-primary/60 hover:bg-gray-900 hover:border-primary/80 text-xs sm:text-sm font-semibold text-white whitespace-nowrap group transition-all cursor-pointer shadow-lg"
+                        className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full bg-black border border-primary/60 hover:bg-gray-900 hover:border-primary/80 text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold text-white whitespace-nowrap group transition-all cursor-pointer shadow-lg"
                       >
-                        <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:rotate-12 transition-transform text-primary" />
-                        <span className="hidden sm:inline">
+                        <Sparkles className="mr-0.5 xs:mr-1 sm:mr-1.5 md:mr-2 h-2.5 xs:h-3 sm:h-3.5 md:h-4 w-2.5 xs:w-3 sm:w-3.5 md:w-4 group-hover:rotate-12 transition-transform text-primary flex-shrink-0" />
+                        <span className="hidden md:inline truncate max-w-[100px] lg:max-w-[120px] xl:max-w-[150px]">
                           {currentUser?.profile?.name || currentUser?.user?.email?.split('@')[0] || 'User'}
                         </span>
-                        <span className="sm:hidden">Profile</span>
-                        <ArrowRight className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-1 transition-transform" />
+                        <span className="md:hidden">Profile</span>
+                        <ArrowRight className="ml-0.5 xs:ml-1 sm:ml-1.5 md:ml-2 h-2.5 xs:h-3 sm:h-3.5 md:h-4 w-2.5 xs:w-3 sm:w-3.5 md:w-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                       </Button>
                     </motion.div>
                   ) : !userLoading ? (
@@ -406,8 +406,8 @@ const Index = () => {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
                       <Link to="/auth">
-                        <Button className="px-3 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm font-semibold">
-                          <LogIn className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-0.5 transition-transform" />
+                        <Button className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold">
+                          <LogIn className="mr-0.5 xs:mr-1 sm:mr-1.5 md:mr-2 h-2.5 xs:h-3 sm:h-3.5 md:h-4 w-2.5 xs:w-3 sm:w-3.5 md:w-4 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
                           <span className="hidden sm:inline">Sign In</span>
                           <span className="sm:hidden">Login</span>
                         </Button>
