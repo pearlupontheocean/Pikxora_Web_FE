@@ -21,15 +21,14 @@ import {
   Award,
   LogIn
 } from "lucide-react";
-import heroGlobe from "@/assets/HeroSection/RRR.jpg";
-import studioFuture from "@/assets/HeroSection/Salaar.jpg";
-import aiNeural from "@/assets/HeroSection/bahubali.jpg";
+import avatar from "@/assets/HeroSection/avatar.webp";
+import akhanda from "@/assets/HeroSection/Akhanda2001.jpg";
+import deadpool from "@/assets/HeroSection/deadpool.png";
+import kanthara from "@/assets/HeroSection/kantara.webp";
+import dooms from "@/assets/HeroSection/dooms.jpg";
 import aiNeural2 from "@/assets/ai-neural.jpg";
 import ai from "@/assets/AI.png";
 import logo from "@/assets/LogoWhite.png"
-
-import artistCyber from "@/assets/HeroSection/dune.jpg";
-import eventFuture from "@/assets/HeroSection/interstellar.jpg";
 
 type HeroMedia =
   | {
@@ -49,27 +48,27 @@ type HeroMedia =
 const heroMedia: HeroMedia[] = [
   {
     type: "image",
-    src: heroGlobe,
+    src: deadpool,
     alt: "RRR inspired cinematic still",
   },
   {
     type: "image",
-    src: studioFuture,
+    src: akhanda,
     alt: "Salaar cinematic frame",
   },
   {
     type: "image",
-    src: aiNeural,
+    src: avatar,
     alt: "Bahubali battle sequence",
   },
   {
     type: "image",
-    src: artistCyber,
+    src: kanthara,
     alt: "Dune inspired vista",
   },
   {
     type: "image",
-    src: eventFuture,
+    src: dooms,
     alt: "Interstellar inspired cosmos",
   },
 ];
@@ -634,21 +633,21 @@ const Index = () => {
                 tagline: "Masters of Quantum Realms",
                 location: "Mumbai, India",
                 specialty: "Photorealistic CGI & Simulations",
-                image: studioFuture
+                image: akhanda
               },
               {
                 name: "NovaEffects LA",
                 tagline: "Holo-Warriors of Tomorrow",
                 location: "Los Angeles, USA",
                 specialty: "Character Animation & Motion Capture",
-                image: heroGlobe
+                image: avatar
               },
               {
                 name: "Celestial Studios",
                 tagline: "Architects of Digital Dreams",
                 location: "London, UK",
                 specialty: "Virtual Production & Real-time VFX",
-                image: eventFuture
+                image: dooms
               }
             ].map((studio, index) => (
               <motion.div
@@ -735,7 +734,7 @@ const Index = () => {
                 role: "AI VFX Pioneer",
                 location: "Mumbai, India",
                 specialty: "Revolutionizing Particle Simulations",
-                image: artistCyber
+                image: dooms
               },
               {
                 name: "Marcus Chen",
@@ -1112,7 +1111,7 @@ const Index = () => {
       {/* Final CTA */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card via-background to-background relative overflow-hidden">
         <div className="absolute inset-0">
-          <img src={eventFuture} alt="Future Event" className="w-full h-full object-cover opacity-10" />
+          <img src={dooms} alt="Future Event" className="w-full h-full object-cover opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
         </div>
 
