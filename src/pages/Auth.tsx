@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DemoCredentials } from "@/components/DemoCredentials";
 import { useCurrentUser, useSignUp, useSignIn } from "@/lib/api-hooks";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
+import spiderman from "@/assets/login.jpg";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -85,24 +85,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-6">
-        {/* Demo Credentials Panel */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center"
-        >
-          <DemoCredentials />
-        </motion.div>
+    <div className="relative min-h-screen flex items-center justify-between px-6 md:px-12 lg:px-20 p-4 overflow-hidden">
+      {/* Responsive full-bleed background image */}
+      <img
+        src={spiderman}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      {/* Readability overlay */}
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/45 to-black/70" /> */}
 
+      <div className="relative z-10 w-full max-w-md gap-6">
         {/* Auth Form */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <Card className="p-8 border-red-glow">
-            <h1 className="text-3xl font-bold text-center mb-2 red-glow-intense">
+          <Card className="p-0 border-none bg-transparent backdrop-blur-md">
+            <h1 className="text-3xl font-bold text-center mb-2">
               {isSignUp ? "Join PIKXORA" : "Welcome Back"}
             </h1>
             <p className="text-center text-muted-foreground mb-6">
@@ -211,6 +212,21 @@ const Auth = () => {
             </div>
           </Card>
         </motion.div>
+      </div>
+
+      {/* Right-side quote (hidden on very small screens) */}
+      <div className="relative z-10 hidden md:flex flex-1 items-center justify-center text-right">
+        <div className="max-w-lg text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)]">
+          <p
+            className="text-2xl md:text-3xl lg:text-4xl font-semibold leading-snug mt-28"
+            style={{
+              fontFamily:
+                '"Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            }}
+          >
+            Pikxora awaits: Pixels reimagined, futures forged in VFX infinity.
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -316,13 +316,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Cinematic Background with Overlay Text */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex flex-col justify-start overflow-hidden">
         {/* Fullscreen media background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 bg-black">
           {heroMedia.map((media, index) => (
             <motion.div
               key={index}
-              className="absolute inset-0"
+              className="absolute inset-0 bg-black"
               initial={{ opacity: 0, scale: 1.05 }}
               animate={{
                 opacity: index === currentIndex ? 1 : 0,
@@ -332,7 +332,7 @@ const Index = () => {
             >
               {media.type === "video" ? (
                 <video
-                  className="h-full w-full object-cover"
+                  className="h-full w-full bg-black object-cover object-[50%_20%] sm:object-center"
                   src={media.src}
                   poster={media.poster}
                   autoPlay
@@ -344,7 +344,7 @@ const Index = () => {
                 <img
                   src={media.src}
                   alt={media.alt}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full bg-black object-cover object-[50%_20%] sm:object-center"
                 />
               )}
             </motion.div>
@@ -420,7 +420,7 @@ const Index = () => {
         </motion.div>
 
         {/* Centered overlay text with faded background */}
-        <div className="relative z-10 container px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 md:pt-32">
+        <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

@@ -256,6 +256,7 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+            {/* Desktop-only buttons */}
             <div className="flex flex-wrap gap-3 w-full sm:w-auto">
               {user?.roles?.includes('studio') || user?.roles?.includes('admin') ? (
                 <Button onClick={() => navigate("/jobs/create")} className="flex-1 sm:flex-none">
