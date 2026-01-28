@@ -8,7 +8,6 @@ import { uploadFile } from "@/lib/upload";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -276,8 +275,6 @@ const WallEdit = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar user={user} />
-      
       <div className="container mx-auto px-4 pt-24 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

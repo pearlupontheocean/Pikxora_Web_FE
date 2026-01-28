@@ -4,10 +4,13 @@ import { motion } from "framer-motion";
 import { LogOut, User, LayoutGrid, LogIn, UserPlus } from "lucide-react";
 import { useSignOut } from "@/lib/api-hooks";
 import { toast } from "sonner";
+import logo from "@/assets/LogoWhite.png";
+import { CurrentUser } from "@/types/jobs";
+import { MobileNav } from "./MobileNav";
 
 interface NavbarProps {
-  user?: any;
-  profile?: any;
+  user?: CurrentUser["user"];
+  profile?: CurrentUser["profile"];
 }
 
 const Navbar = ({ user, profile }: NavbarProps) => {
@@ -30,17 +33,18 @@ const Navbar = ({ user, profile }: NavbarProps) => {
       animate={{ y: 0 }}
       className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <motion.h1
-            className="text-2xl font-bold red-glow-intense"
+          <motion.img
+            src={logo}
+            alt="PIKXORA Logo"
+            className="h-16 w-auto"
             whileHover={{ scale: 1.05 }}
-          >
-            PIKXORA
-          </motion.h1>
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          />
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
               <Link to="/browse">
@@ -82,6 +86,11 @@ const Navbar = ({ user, profile }: NavbarProps) => {
               </Link>
             </>
           )}
+        </div>
+
+        {/* Mobile navigation trigger */}
+        <div className="md:hidden">
+          <MobileNav user={user} profile={profile} />
         </div>
       </div>
     </motion.nav>

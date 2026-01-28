@@ -17,7 +17,6 @@ import RatingStars from "@/components/RatingStars";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar"; // Import Navbar
 
 const CreatorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,7 +106,6 @@ const CreatorDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen  text-white">
-      <Navbar user={currentUserData?.user} profile={currentUserData?.profile} /> {/* Pass user and profile to Navbar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

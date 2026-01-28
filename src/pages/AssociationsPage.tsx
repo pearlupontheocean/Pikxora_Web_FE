@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import RatingStars from '@/components/RatingStars';
-import Navbar from '@/components/Navbar';
 
 const AssociationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -56,7 +55,6 @@ const AssociationsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <Navbar user={currentUserData?.user} profile={currentUserData?.profile} />
       <div className="container mx-auto p-4 mt-24">
         <h1 className="text-3xl font-bold mb-6 text-white">Your Associations</h1>
 

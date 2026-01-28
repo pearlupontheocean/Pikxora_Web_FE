@@ -1,13 +1,43 @@
 import { Shield, Globe, Users, Mail, Linkedin, Twitter, Instagram } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Footer = () => {
+  const navigate = useNavigate();
+
+  const handlePricingClick = () => {
+    // Scroll to pricing section if on homepage, otherwise navigate to homepage
+    if (window.location.pathname === "/") {
+      const pricingSection = document.getElementById("pricing");
+      if (pricingSection) {
+        pricingSection.scrollIntoView({ behavior: "smooth" });
+      } else {
+        toast.info("Pricing information coming soon!");
+      }
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const pricingSection = document.getElementById("pricing");
+        if (pricingSection) {
+          pricingSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  };
+
+  const handleComingSoon = (name: string) => {
+    toast.info(`${name} coming soon!`);
+  };
+
   return (
     <footer className="py-16 px-4 lg:px-8 bg-background border-t border-primary/20">
       <div className="max-w-7xl pl-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
           {/* Brand Section */}
           <div className="space-y-4 text-left">
-            <h3 className="text-3xl font-bold red-glow mb-6">PIKXORA</h3>
+            <Link to="/" className="block">
+              <h3 className="text-3xl font-bold red-glow mb-6 hover:opacity-80 transition-opacity">PIKXORA</h3>
+            </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The leading global community platform empowering VFX studios and artists worldwide. 
               Connecting talent with opportunities and driving innovation in visual effects.
@@ -23,11 +53,11 @@ const Footer = () => {
           <div className="space-y-4 text-left">
             <h4 className="font-semibold text-lg mb-6 text-foreground">Platform</h4>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p className="hover:text-primary cursor-pointer transition-colors">Find Studios</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Browse Artists</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Job Board</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Showcase Projects</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Pricing</p>
+              <Link to="/browse" className="block hover:text-primary cursor-pointer transition-colors">Find Studios</Link>
+              <Link to="/browse" className="block hover:text-primary cursor-pointer transition-colors">Browse Artists</Link>
+              <Link to="/jobs" className="block hover:text-primary cursor-pointer transition-colors">Job Board</Link>
+              <Link to="/browse" className="block hover:text-primary cursor-pointer transition-colors">Showcase Projects</Link>
+              <button onClick={handlePricingClick} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Pricing</button>
             </div>
           </div>
 
@@ -35,11 +65,11 @@ const Footer = () => {
           <div className="space-y-4 text-left">
             <h4 className="font-semibold text-lg mb-6 text-foreground">Resources</h4>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p className="hover:text-primary cursor-pointer transition-colors">Help Center</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">API Documentation</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Community Forum</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Blog & News</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Contact Support</p>
+              <button onClick={() => handleComingSoon("Help Center")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Help Center</button>
+              <button onClick={() => handleComingSoon("API Documentation")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">API Documentation</button>
+              <button onClick={() => handleComingSoon("Community Forum")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Community Forum</button>
+              <button onClick={() => handleComingSoon("Blog & News")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Blog & News</button>
+              <a href="mailto:support@pikxora.com" className="block hover:text-primary cursor-pointer transition-colors">Contact Support</a>
             </div>
           </div>
 
@@ -47,16 +77,24 @@ const Footer = () => {
           <div className="space-y-4 text-left">
             <h4 className="font-semibold text-lg mb-6 text-foreground">Connect With Us</h4>
             <div className="flex gap-4 mb-6">
-              <Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
-              <Twitter className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
-              <Instagram className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
-              <Mail className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
+              <a href="https://linkedin.com/company/pikxora" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
+              </a>
+              <a href="https://twitter.com/pikxora" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <Twitter className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
+              </a>
+              <a href="https://instagram.com/pikxora" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <Instagram className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
+              </a>
+              <a href="mailto:contact@pikxora.com" aria-label="Email">
+                <Mail className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-all hover:scale-110" />
+              </a>
             </div>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p className="hover:text-primary cursor-pointer transition-colors">Privacy Policy</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Terms of Service</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Community Guidelines</p>
-              <p className="hover:text-primary cursor-pointer transition-colors">Cookie Preferences</p>
+              <button onClick={() => handleComingSoon("Privacy Policy")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Privacy Policy</button>
+              <button onClick={() => handleComingSoon("Terms of Service")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Terms of Service</button>
+              <button onClick={() => handleComingSoon("Community Guidelines")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Community Guidelines</button>
+              <button onClick={() => handleComingSoon("Cookie Preferences")} className="block hover:text-primary cursor-pointer transition-colors text-left w-full">Cookie Preferences</button>
             </div>
           </div>
         </div>
