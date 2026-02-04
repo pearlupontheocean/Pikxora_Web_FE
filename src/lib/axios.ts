@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use relative URL in development, full URL in production
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL;
 console.log("API_URL:", API_URL);
 
 // Create axios instance

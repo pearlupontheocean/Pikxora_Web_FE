@@ -235,7 +235,7 @@ const Dashboard = () => {
     <div className="min-h-screen">
       <Navbar user={user} profile={profile} />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

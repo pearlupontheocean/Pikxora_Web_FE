@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://195.35.7.60:5001/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 console.log("API_URL:", API_URL);
 
