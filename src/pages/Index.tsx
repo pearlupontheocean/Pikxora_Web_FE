@@ -1,6 +1,8 @@
 import { animate, motion, useInView, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Clock } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCurrentUser } from "@/lib/api-hooks";
@@ -404,8 +406,8 @@ const Index = () => {
                       exit={{ opacity: 0, scale: 0.8, y: -10 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <Link to="/auth">
-                        <Button className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold">
+                      <Link to="/">
+                        <Button disabled className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold">
                           <LogIn className="mr-0.5 xs:mr-1 sm:mr-1.5 md:mr-2 h-2.5 xs:h-3 sm:h-3.5 md:h-4 w-2.5 xs:w-3 sm:w-3.5 md:w-4 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
                           <span className="hidden sm:inline">Sign In</span>
                           <span className="sm:hidden">Login</span>
@@ -566,224 +568,113 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Industry Associations Section */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background">
-        <div className="container mx-auto max-w-7xl">
-          <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-12 sm:mb-16 md:mb-20"
-          >
-            <motion.h2
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
-              variants={headerVariants}
-            >
-               Associations & Collaborations
-            </motion.h2>
-            <motion.p
-              className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2"
-              variants={subtitleVariants}
-            >
-              Forge powerful connections and drive industry innovation.
-            </motion.p>
-          </motion.div>
-          <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-100px" }}
-            transition={{ delay: 0.2 }} // Add a slight delay for the content after the header
-          >
-            <IndustryAssociationsSection />
-          </motion.div>
-        </div>
-      </section>
+ {/* Industry Associations Section */}
+<section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background">
+  <div className="container mx-auto max-w-7xl">
 
-      {/* Showcase Studios & Talent */}
-      <section className="pt-8 sm:pt-12 md:pt-0 pb-2 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-card">
-        <div className="container mx-auto max-w-7xl">
-          <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-12 sm:mb-16 md:mb-20"
-          >
-            <motion.h2 
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 leading-tight px-2"
-              variants={headerVariants}
-            >
-              Global Studios • Infinite Talent
-            </motion.h2>
-            <motion.p 
-              className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed px-2"
-              variants={subtitleVariants}
-            >
-              Connecting visionaries across continents
-            </motion.p>
-          </motion.div>
+    {/* Header */}
+    <motion.div
+      variants={fadeUpVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, margin: "-100px" }}
+      className="text-center mb-12 sm:mb-16 md:mb-20"
+    >
+      <motion.h2
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
+        variants={headerVariants}
+      >
+        Associations & Collaborations
+      </motion.h2>
 
-          {/* Studio Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-12 sm:mb-16 md:mb-20">
-            {[
-              {
-                name: "PixelForge India",
-                tagline: "Masters of Quantum Realms",
-                location: "Mumbai, India",
-                specialty: "Photorealistic CGI & Simulations",
-                image: akhanda
-              },
-              {
-                name: "NovaEffects LA",
-                tagline: "Holo-Warriors of Tomorrow",
-                location: "Los Angeles, USA",
-                specialty: "Character Animation & Motion Capture",
-                image: avatar
-              },
-              {
-                name: "Celestial Studios",
-                tagline: "Architects of Digital Dreams",
-                location: "London, UK",
-                specialty: "Virtual Production & Real-time VFX",
-                image: dooms
-              }
-            ].map((studio, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
-              >
-                <motion.div
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card className="overflow-hidden border border-primary/30 hover:border-primary/60 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 h-full">
-                  <div className="relative aspect-video overflow-hidden">
-                    <img
-                      src={studio.image}
-                      alt={studio.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-                    <div className="absolute top-4 right-4">
-                      <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-4 py-2 rounded-full border border-primary/30">
-                        <Award className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-semibold text-foreground">Elite</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 sm:p-6 md:p-8 space-y-3 sm:space-y-4">
-                    <h3 className="text-xl sm:text-2xl font-bold red-glow">{studio.name}</h3>
-                    <p className="text-xs sm:text-sm text-primary italic font-medium">{studio.tagline}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
-                      <Globe className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      {studio.location}
-                    </p>
-                    <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed">{studio.specialty}</p>
-                    <Link to="/browse">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                      >
-                        <Button className="w-full mt-4 group/btn">
-                          Connect Now
-                          <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </Button>
-                      </motion.div>
-                    </Link>
-                  </div>
-                </Card>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
+      <motion.p
+        className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2"
+        variants={subtitleVariants}
+      >
+        Forge powerful connections and drive industry innovation.
+      </motion.p>
+    </motion.div>
 
-          {/* Artist Spotlight */}
-          <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-8 sm:mb-12"
-          >
-            <motion.h3 
-              className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 px-2"
-              variants={headerVariants}
-            >
-              Rising Stars
-            </motion.h3>
-            <motion.p 
-              className="text-muted-foreground text-sm sm:text-base px-2"
-              variants={subtitleVariants}
-            >
-              Meet the next generation of VFX pioneers
-            </motion.p>
-          </motion.div>
+    {/* Coming Soon Placeholder */}
+    <motion.div
+      variants={fadeUpVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, margin: "-100px" }}
+      className="flex flex-col items-center justify-center py-20 sm:py-28 md:py-32 text-center"
+    >
+      <div className="flex items-center gap-3 px-6 py-4 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md">
+        <Clock className="h-5 w-5 text-primary animate-pulse" />
+        <span className="text-sm sm:text-base font-semibold text-foreground tracking-wide">
+          Coming Soon
+        </span>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-8 sm:mt-12">
-            {[
-              {
-                name: "Aisha Rao",
-                role: "AI VFX Pioneer",
-                location: "Mumbai, India",
-                specialty: "Revolutionizing Particle Simulations",
-                image: dooms
-              },
-              {
-                name: "Marcus Chen",
-                role: "Character Technical Director",
-                location: "Singapore",
-                specialty: "Photorealistic Facial Rigs"
-              },
-              {
-                name: "Sofia Martinez",
-                role: "Compositing Artist",
-                location: "Barcelona, Spain",
-                specialty: "Cinematic Color Grading"
-              }
-            ].map((artist, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
-              >
-                <motion.div
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card className="p-4 sm:p-6 md:p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full bg-card/50 backdrop-blur-sm">
-                  {/* {artist.image && (
-                    <div className="relative w-28 h-28 mx-auto mb-6 rounded-full overflow-hidden border-2 border-primary/40 group-hover:border-primary/70 transition-colors ring-4 ring-primary/10">
-                      <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                  )} */}
-                  <div className="text-center space-y-2 sm:space-y-3">
-                    <h4 className="font-bold text-lg sm:text-xl text-foreground">{artist.name}</h4>
-                    <p className="text-primary text-xs sm:text-sm font-medium">{artist.role}</p>
-                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Globe className="h-3 w-3" />
-                      {artist.location}
-                    </p>
-                    <p className="text-xs sm:text-sm italic text-foreground/70 leading-relaxed pt-1 sm:pt-2">{artist.specialty}</p>
-                  </div>
-                </Card>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
+        We’re building meaningful industry partnerships. Stay tuned.
+      </p>
+    </motion.div>
+
+    {/* <IndustryAssociationsSection /> */}
+  </div>
+</section>
+
+
+    {/* Showcase Studios & Talent */}
+<section className="pt-8 sm:pt-12 md:pt-0 pb-2 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-card">
+  <div className="container mx-auto max-w-7xl">
+
+    {/* Header */}
+    <motion.div
+      variants={fadeUpVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, margin: "-100px" }}
+      className="text-center mb-12 sm:mb-16 md:mb-20"
+    >
+      <motion.h2
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 leading-tight px-2"
+        variants={headerVariants}
+      >
+        Global Studios • Infinite Talent
+      </motion.h2>
+
+      <motion.p
+        className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed px-2"
+        variants={subtitleVariants}
+      >
+        Connecting visionaries across continents
+      </motion.p>
+    </motion.div>
+
+    {/* Coming Soon Placeholder */}
+    <motion.div
+      variants={fadeUpVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, margin: "-100px" }}
+      className="flex flex-col items-center justify-center py-20 sm:py-28 md:py-32 text-center"
+    >
+      <div className="flex items-center gap-3 px-6 py-4 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-md">
+        <Clock className="h-5 w-5 text-primary animate-pulse" />
+        <span className="text-sm sm:text-base font-semibold text-foreground tracking-wide">
+          Coming Soon
+        </span>
+      </div>
+
+      <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-md leading-relaxed">
+        World-class studios and exceptional talent are on the way.
+      </p>
+    </motion.div>
+
+    {/*
+      Studio Cards Grid
+      ------------------
+      Temporarily disabled until launch
+    */}
+  </div>
+</section>
+
 
       {/* Upcoming Events */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background">
