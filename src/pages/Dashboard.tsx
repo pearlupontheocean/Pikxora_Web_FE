@@ -418,7 +418,7 @@ const Dashboard = () => {
           {user?.roles?.includes("admin") && (
             <div>
               <h2 className="text-xl sm:text-2xl font-bold mb-6">Admin Panel</h2>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4">
                 <Button
                   onClick={() => navigate("/admin/verifications")}
                   size="lg"
@@ -433,6 +433,14 @@ const Dashboard = () => {
                   className="w-full sm:w-auto"
                 >
                   Manage All Users
+                </Button>
+                <Button
+                  onClick={() => navigate("/admin/news")}
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
+                  Manage Industry News
                 </Button>
               </div>
             </div>

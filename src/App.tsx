@@ -28,6 +28,7 @@ const StudioJobsDashboard = lazy(() => import("./pages/StudioJobsDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AssociationsPage = lazy(() => import("./pages/AssociationsPage"));
 const CreatorDetailsPage = lazy(() => import("./pages/CreatorDetailsPage"));
+const AdminNews = lazy(() => import("./pages/AdminNews"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,20 +58,29 @@ const AppContent = () => {
     }
 
     // Association request received
-    socket.on("newAssociationRequest", (association: any) => {
-      const requesterName = association.requester?.profile?.name || association.requester?.name || "Someone";
+    socket.on("newAssociationRequest", (association: { requester?: { profile?: { name?: string }; name?: string } }) => {
+      const requesterName =
+        association.requester?.profile?.name ||
+        association.requester?.name ||
+        "Someone";
       toast.info(`New association request from ${requesterName}!`);
       queryClient.invalidateQueries({ queryKey: ['pendingAssociations'] });
       queryClient.invalidateQueries({ queryKey: ['myAssociations'] });
     });
 
     // Association accepted
-    socket.on("associationAccepted", (association: any) => {
-      const recipientName = association.recipient?.profile?.name || association.recipient?.name || "Someone";
+    socket.on(
+      "associationAccepted",
+      (association: { recipient?: { profile?: { name?: string }; name?: string } }) => {
+        const recipientName =
+          association.recipient?.profile?.name ||
+          association.recipient?.name ||
+          "Someone";
       toast.success(`${recipientName} accepted your association request!`);
       queryClient.invalidateQueries({ queryKey: ['pendingAssociations'] });
       queryClient.invalidateQueries({ queryKey: ['myAssociations'] });
-    });
+      }
+    );
 
     // Association rejected
     socket.on("associationRejected", (data: { associationId: string; recipientId: string; recipientName?: string }) => {
@@ -110,6 +120,7 @@ const AppContent = () => {
               <Route path="/wall/:id" element={<WallView />} />
               <Route path="/wall/:id/edit" element={<WallEdit />} />
               <Route path="/admin/verifications" element={<AdminVerifications />} />
+              <Route path="/admin/news" element={<AdminNews />} />
               <Route path="/profile/settings" element={<ProfileSettings />} />
               <Route path="/jobs" element={<JobsBrowsePage />} />
               <Route path="/jobs/create" element={<JobCreatePage />} />
