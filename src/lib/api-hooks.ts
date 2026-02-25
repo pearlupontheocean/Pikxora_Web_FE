@@ -680,6 +680,110 @@ export const useRemoveAssociation = () => {
   });
 };
 
+// Industry news types & hooks
+export interface IndustryNews {
+  _id: string;
+  title: string;
+  teaser: string;
+  category?: string;
+  link?: string;
+  image_url?: string;
+  is_published: boolean;
+  created_by?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const useIndustryNews = (limit: number = 4) => {
+  return useQuery<IndustryNews[]>({
+    queryKey: ['industryNews', limit],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/news/public', {
+        params: { limit },
+      });
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+};
+
+export const useAdminNews = () => {
+  return useQuery<IndustryNews[]>({
+    queryKey: ['adminNews'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/news');
+      return response.data;
+    },
+    enabled: !!localStorage.getItem('token'),
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useCreateNews = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      title: string;
+      teaser: string;
+      category?: string;
+      link?: string;
+      image_url?: string;
+      is_published?: boolean;
+    }) => {
+      const response = await axiosInstance.post('/news', data);
+      return response.data as IndustryNews;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminNews'] });
+      queryClient.invalidateQueries({ queryKey: ['industryNews'] });
+    },
+  });
+};
+
+export const useUpdateNews = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        title?: string;
+        teaser?: string;
+        category?: string;
+        link?: string;
+        image_url?: string;
+        is_published?: boolean;
+      };
+    }) => {
+      const response = await axiosInstance.put(`/news/${id}`, data);
+      return response.data as IndustryNews;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminNews'] });
+      queryClient.invalidateQueries({ queryKey: ['industryNews'] });
+    },
+  });
+};
+
+export const useDeleteNews = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.delete(`/news/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminNews'] });
+      queryClient.invalidateQueries({ queryKey: ['industryNews'] });
+    },
+  });
+};
+
 // Job Application hooks (for Studio Jobs)
 export const useApplyForJob = () => {
   const queryClient = useQueryClient();

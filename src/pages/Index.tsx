@@ -12,15 +12,17 @@ import { Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useCurrentUser } from "@/lib/api-hooks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useCurrentUser, useIndustryNews } from "@/lib/api-hooks";
 import IndustryAssociationsSection from "@/components/IndustryAssociationsSection";
-import {
-  ArrowRight,
-  Globe,
-  Sparkles,
-  Users,
-  Zap,
-  TrendingUp,
+import { 
+  ArrowRight, 
+  ArrowLeft,
+  Globe, 
+  Sparkles, 
+  Users, 
+  Zap, 
+  TrendingUp, 
   Rocket,
   Heart,
   Target,
@@ -306,8 +308,19 @@ const AnimatedStatValue: React.FC<{ value: number; suffix?: string }> = ({
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<{
+    id: string | number;
+    headline: string;
+    teaser: string;
+    category: string;
+    image: string;
+  } | null>(null);
+  const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
+  const [newsSliderIndex, setNewsSliderIndex] = useState(0);
+  const newsTrackRef = useRef<HTMLDivElement | null>(null);
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const navigate = useNavigate();
+  const { data: industryNews } = useIndustryNews(20);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -817,7 +830,7 @@ const Index = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-100px" }}
-            className="text-center mb-12 sm:mb-16 md:mb-20"
+            className="text-center mb-6 sm:mb-8 md:mb-10"
           >
             <motion.h2
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold red-glow mb-4 sm:mb-6 md:mb-8 leading-tight px-2"
@@ -833,60 +846,153 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
-            {[
-              {
-                headline: "Adobe's New AI Upscaler Shatters Render Times",
-                teaser: "How Pikxora Members Are Leading the Charge",
-                category: "Technology",
-              },
-              {
-                headline: "Indian Studio Wins Oscar Nod for VFX",
-                teaser: "Spotlight on Hyderabad's Hidden Gems",
-                category: "Awards",
-              },
-              {
-                headline: "Global Talent Shortage? Not Anymore.",
-                teaser:
-                  "Pikxora's Empowerment Initiative Bridges the Gap with Free Upskilling",
-                category: "Education",
-              },
-              {
-                headline: "Welfare Win: New Union Pushes for AI-Ethics",
-                teaser: "Join the Conversation on Responsible Innovation",
-                category: "Community",
-              },
-            ].map((news, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
+          <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 mb-8 sm:mb-12">
+            <div className="flex items-center">
+              <button
+                type="button"
+                aria-label="Previous news"
+                className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all ml-4"
+                onClick={() => {
+                  if (!newsTrackRef.current) return;
+                  const container = newsTrackRef.current;
+                  const cardWidth = container.firstElementChild
+                    ? (container.firstElementChild as HTMLElement).offsetWidth + 16
+                    : 320;
+                  const nextIndex = Math.max(newsSliderIndex - 1, 0);
+                  setNewsSliderIndex(nextIndex);
+                  container.scrollTo({
+                    left: nextIndex * cardWidth,
+                    behavior: "smooth",
+                  });
+                }}
               >
-                <motion.div
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Card className="p-4 sm:p-6 md:p-8 border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full cursor-pointer bg-card/50 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                      <Newspaper className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                      <span className="text-xs text-primary font-semibold uppercase tracking-wider">
-                        {news.category}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-lg sm:text-xl mb-2 sm:mb-3 text-foreground group-hover:text-primary/90 transition-colors leading-tight">
-                      {news.headline}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      {news.teaser}
-                    </p>
-                  </Card>
-                </motion.div>
-              </motion.div>
-            ))}
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+
+              <div
+                ref={newsTrackRef}
+                className="flex gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 overflow-x-auto pb-4 snap-x snap-mandatory w-full"
+              >
+                {(industryNews && industryNews.length > 0
+                  ? industryNews.map((item, index) => ({
+                      id: item._id,
+                      headline: item.title,
+                      teaser: item.teaser,
+                      category: item.category || "News",
+                      image:
+                        item.image_url ||
+                        [deadpool, akhanda, avatar, dooms][index % 4],
+                    }))
+                  : [
+                      {
+                        id: "fallback-1",
+                        headline:
+                          "Adobe's New AI Upscaler Shatters Render Times",
+                        teaser:
+                          "How Pikxora Members Are Leading the Charge",
+                        category: "Technology",
+                        image: deadpool,
+                      },
+                      {
+                        id: "fallback-2",
+                        headline:
+                          "Indian Studio Wins Oscar Nod for VFX",
+                        teaser: "Spotlight on Hyderabad's Hidden Gems",
+                        category: "Awards",
+                        image: akhanda,
+                      },
+                      {
+                        id: "fallback-3",
+                        headline:
+                          "Global Talent Shortage? Not Anymore.",
+                        teaser:
+                          "Pikxora's Empowerment Initiative Bridges the Gap with Free Upskilling",
+                        category: "Education",
+                        image: avatar,
+                      },
+                      {
+                        id: "fallback-4",
+                        headline:
+                          "Welfare Win: New Union Pushes for AI-Ethics",
+                        teaser:
+                          "Join the Conversation on Responsible Innovation",
+                        category: "Community",
+                        image: dooms,
+                      },
+                    ]
+                ).map((news, index) => (
+                  <motion.div
+                    key={news.id ?? index}
+                    variants={cardVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group flex-none w-[260px] sm:w-[300px] md:w-[340px] snap-start"
+                  >
+                    <motion.div
+                      whileHover={{ y: -8, scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="h-full"
+                      onClick={() => {
+                        setSelectedNews(news);
+                        setIsNewsDialogOpen(true);
+                      }}
+                    >
+                      <Card className="border border-primary/20 hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 h-full cursor-pointer bg-card/70 backdrop-blur-sm overflow-hidden flex flex-col">
+                        <div className="relative w-full aspect-[16/9] overflow-hidden">
+                          <img
+                            src={news.image}
+                            alt={news.headline}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Newspaper className="h-4 w-4 text-primary" />
+                              <span className="text-[10px] sm:text-xs text-primary font-semibold uppercase tracking-wider">
+                                {news.category}
+                              </span>
+                            </div>
+                            <h3 className="font-semibold text-sm sm:text-base md:text-lg text-white leading-snug line-clamp-2">
+                              {news.headline}
+                            </h3>
+                          </div>
+                        </div>
+                        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                            {news.teaser}
+                          </p>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                aria-label="Next news"
+                className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/60 transition-all mr-4"
+                onClick={() => {
+                  if (!newsTrackRef.current) return;
+                  const container = newsTrackRef.current;
+                  const cardWidth = container.firstElementChild
+                    ? (container.firstElementChild as HTMLElement).offsetWidth + 16
+                    : 320;
+                  const totalCards = container.childElementCount;
+                  const maxIndex = Math.max(totalCards - 1, 0);
+                  const nextIndex = Math.min(newsSliderIndex + 1, maxIndex);
+                  setNewsSliderIndex(nextIndex);
+                  container.scrollTo({
+                    left: nextIndex * cardWidth,
+                    behavior: "smooth",
+                  });
+                }}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           <div className="text-center pt-4">
@@ -901,6 +1007,37 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* News Detail Modal */}
+      <Dialog open={isNewsDialogOpen} onOpenChange={setIsNewsDialogOpen}>
+        <DialogContent className="max-w-xl">
+          {selectedNews && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedNews.headline}</DialogTitle>
+                <DialogDescription className="flex items-center gap-2 text-xs uppercase tracking-wide">
+                  <Newspaper className="h-3 w-3 text-primary" />
+                  <span className="text-primary font-semibold">
+                    {selectedNews.category}
+                  </span>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-md border border-border bg-muted">
+                  <img
+                    src={selectedNews.image}
+                    alt={selectedNews.headline}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {selectedNews.teaser}
+                </p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* AI Revolution Section */}
       <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-card to-background relative overflow-hidden">
