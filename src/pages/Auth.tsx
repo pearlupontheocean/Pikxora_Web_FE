@@ -37,8 +37,8 @@ const Auth = () => {
   const loading = signUpMutation.isPending || signInMutation.isPending;
 
   useEffect(() => {
-    // Only navigate if we have a current user and not loading
-    if (!userLoading && currentUser && hasToken) {
+    // Only redirect to dashboard if we have confirmed user data (avoids redirect on stale cache)
+    if (!userLoading && currentUser?.user && hasToken) {
       navigate("/dashboard");
     }
   }, [currentUser, userLoading, hasToken, navigate]);
