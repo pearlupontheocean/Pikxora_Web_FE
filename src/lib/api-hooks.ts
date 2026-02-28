@@ -199,8 +199,9 @@ export const useUpdateWall = () => {
       const response = await axiosInstance.put(`/walls/${id}`, data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['myWalls'] });
+      queryClient.invalidateQueries({ queryKey: ['wall', id] });
     },
   });
 };

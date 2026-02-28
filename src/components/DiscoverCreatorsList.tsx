@@ -132,7 +132,7 @@ export const DiscoverCreatorsList: React.FC<DiscoverCreatorsListProps> = ({
     if (currentUserId) {
       ids.add(currentUserId);
     }
-    myAssociations?.forEach(association => {
+    (Array.isArray(myAssociations) ? myAssociations : []).forEach(association => {
       const otherUser = association.requester._id === currentUserId
         ? association.recipient
         : association.requester;
@@ -185,10 +185,10 @@ export const DiscoverCreatorsList: React.FC<DiscoverCreatorsListProps> = ({
     );
   }
 
-  const verifiedCreators = discoverProfiles?.filter(profile =>
+  const verifiedCreators = (Array.isArray(discoverProfiles) ? discoverProfiles : []).filter(profile =>
     profile.verification_status === "approved" &&
     (profile.role === "artist" || profile.role === "studio")
-  ) || [];
+  );
 
   return (
     <div className="mt-8">

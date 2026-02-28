@@ -198,7 +198,8 @@ const Dashboard = () => {
   // React Query hooks
   const { data: currentUserData, isLoading: userLoading } = useCurrentUser();
   const { data: profile, isLoading: profileLoading } = useMyProfile();
-  const { data: walls = [], isLoading: wallsLoading } = useMyWalls();
+  const { data: wallsData, isLoading: wallsLoading } = useMyWalls();
+  const walls = Array.isArray(wallsData) ? wallsData : [];
   const { mutateAsync: updateWall, isPending: isUpdatingWall } = useUpdateWall();
   const { data: pendingAssociations, isLoading: isLoadingPendingAssociations } = usePendingAssociations();
 

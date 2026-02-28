@@ -438,12 +438,12 @@ const Index = () => {
                       exit={{ opacity: 0, scale: 0.8, y: -10 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                      <Link to="/">
-                        {/* <Button disabled className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold">
+                      <Link to="/auth">
+                        <Button  className="px-2.5 xs:px-3 sm:px-4 md:px-5 lg:px-6 xl:px-7 py-1.5 xs:py-2 sm:py-2 md:py-2.5 lg:py-3 rounded-full group shadow-lg hover:shadow-xl transition-all text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm font-semibold">
                           <LogIn className="mr-0.5 xs:mr-1 sm:mr-1.5 md:mr-2 h-2.5 xs:h-3 sm:h-3.5 md:h-4 w-2.5 xs:w-3 sm:w-3.5 md:w-4 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
                           <span className="hidden sm:inline">Sign In</span>
                           <span className="sm:hidden">Login</span>
-                        </Button> */}
+                        </Button>
                       </Link>
                     </motion.div>
                   ) : null}
@@ -873,7 +873,7 @@ const Index = () => {
                 ref={newsTrackRef}
                 className="flex gap-4 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 overflow-x-auto pb-4 snap-x snap-mandatory w-full"
               >
-                {(industryNews && industryNews.length > 0
+                {(Array.isArray(industryNews) && industryNews.length > 0
                   ? industryNews.map((item, index) => ({
                       id: item._id,
                       headline: item.title,

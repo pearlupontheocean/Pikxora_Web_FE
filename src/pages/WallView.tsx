@@ -152,6 +152,16 @@ const WallView = () => {
     };
     order_index?: number;
   } | null>(null);
+
+  // Wall associations (name, description, image, url)
+  const [isAssociationDialogOpen, setIsAssociationDialogOpen] = useState(false);
+  const [editingAssociation, setEditingAssociation] = useState<{
+    index: number;
+    name: string;
+    description?: string;
+    image?: string;
+    url?: string;
+  } | null>(null);
   
   const loadProjects = useCallback(async () => {
     if (!id) return;
@@ -433,83 +443,185 @@ const WallView = () => {
               </motion.div>
             )}
 
-            {/* Associations Section */}
-            {wallOwner?.associations && wallOwner.associations.length > 0 && (
+            {/* Associations Section (Wall associations: name, description, image, url) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: 0.1 }}
-                className="mt-8"
-              >
+              className="mt-8"
+            >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.6 }}
-                  className="text-center mb-3"
-                >
-                  <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">
-                    Associations
-                  </h2>
-                  <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
-                </motion.div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {wallOwner.associations.map(
-                    (assoc: string, index: number) => {
-                      // Select icon based on association name or use default
-                      const getIcon = (name: string) => {
-                        const lowerName = name.toLowerCase();
-                        if (
-                          lowerName.includes("academy") ||
-                          lowerName.includes("award") ||
-                          lowerName.includes("oscar") ||
-                          lowerName.includes("ves")
-                        ) {
-                          return Award;
-                        } else if (
-                          lowerName.includes("studio") ||
-                          lowerName.includes("company") ||
-                          lowerName.includes("corp")
-                        ) {
-                          return Building2;
-                        } else if (
-                          lowerName.includes("union") ||
-                          lowerName.includes("guild") ||
-                          lowerName.includes("association")
-                        ) {
-                          return Shield;
-                        } else {
-                          return Network;
-                        }
-                      };
-                      const IconComponent = getIcon(assoc);
-                      
-                      return (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 0.5, delay: index * 0.1 }}
-                        >
-                          <Card className="p-4 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-xl h-full">
-                            <div className="flex items-start gap-3">
-                              <IconComponent className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-sm md:text-base leading-relaxed text-foreground font-medium">
-                              {assoc}
-                                </p>
-                          </div>
-                  </div>
-                </Card>
+                transition={{ duration: 0.6 }}
+                className="text-center mb-3"
+              >
+                <h2 className="text-2xl md:text-3xl font-bold mb-1 red-glow-intense">
+                  Associations
+                </h2>
+                <div className="w-20 h-0.5 bg-primary mx-auto rounded-full" />
               </motion.div>
-                      );
-                    }
-            )}
+              <div className="flex items-center justify-end mb-3">
+                {isOwner && (
+                  <>
+                    <Button onClick={() => { setEditingAssociation(null); setIsAssociationDialogOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Association
+                    </Button>
+                    {editingAssociation && (
+                      <AssociationDialog
+                        association={editingAssociation}
+                        existingAssociations={Array.isArray(wall.associations) ? wall.associations : []}
+                        onSuccess={async (updated) => {
+                          try {
+                            await updateWall({ id: id!, data: { associations: updated } });
+                            toast.success("Association updated!");
+                            setEditingAssociation(null);
+                          } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : (e as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to update";
+                            toast.error(msg);
+                          }
+                        }}
+                        open={!!editingAssociation}
+                        onOpenChange={(open) => !open && setEditingAssociation(null)}
+                        mode="edit"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+              {Array.isArray(wall.associations) && wall.associations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {wall.associations.map((assoc: { name: string; description?: string; image?: string; url?: string }, index: number) => {
+                    const getIcon = (name: string) => {
+                      const lowerName = name.toLowerCase();
+                      if (lowerName.includes("academy") || lowerName.includes("award") || lowerName.includes("oscar") || lowerName.includes("ves")) return Award;
+                      if (lowerName.includes("studio") || lowerName.includes("company") || lowerName.includes("corp")) return Building2;
+                      if (lowerName.includes("union") || lowerName.includes("guild") || lowerName.includes("association")) return Shield;
+                      return Network;
+                    };
+                    const IconComponent = getIcon(assoc.name);
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        className="group"
+                      >
+                        <Card className="overflow-hidden border border-primary/30 hover:border-primary/60 transition-all duration-300 hover:-translate-y-2 h-full">
+                          <div className="p-4 flex items-start gap-3">
+                            <div className="relative flex-shrink-0">
+                              {assoc.image ? (
+                                <img src={assoc.image} alt={assoc.name} className="w-14 h-14 rounded-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              ) : (
+                                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <IconComponent className="h-6 w-6 text-primary" />
+                                </div>
+                              )}
+                              {isOwner && (
+                                <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                  <Button size="sm" variant="secondary" onClick={() => setEditingAssociation({ index, ...assoc })} className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm min-w-0">
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={async () => {
+                                      if (!confirm("Delete this association?")) return;
+                                      const updated = [...(wall.associations || [])];
+                                      updated.splice(index, 1);
+                                      try {
+                                        await updateWall({ id: id!, data: { associations: updated } });
+                                        toast.success("Association deleted!");
+                                      } catch (e: unknown) {
+                                        const msg = e instanceof Error ? e.message : (e as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to delete";
+                                        toast.error(msg);
+                                      }
+                                    }}
+                                    className="h-6 w-6 p-0 min-w-0"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base font-bold leading-tight">{assoc.name}</h3>
+                              {assoc.description && (
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+                                  {assoc.description}
+                                </p>
+                              )}
+                              {assoc.url && (
+                                <a href={assoc.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-1.5 text-primary hover:underline text-xs">
+                                  <ExternalLink className="h-3 w-3" />
+                                  Visit
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
                 </div>
+              ) : (
+                <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
+                  <Card className="p-12 text-center border-dashed">
+                    <Network className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">No associations yet</p>
+                    {isOwner && (
+                      <>
+                        <Button onClick={() => setIsAssociationDialogOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Your First Association
+                        </Button>
+                        <AssociationDialog
+                        association={null}
+                        existingAssociations={[]}
+                        onSuccess={async (updated) => {
+                          try {
+                            await updateWall({ id: id!, data: { associations: updated } });
+                            toast.success("Association added!");
+                            setIsAssociationDialogOpen(false);
+                          } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : (e as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to add";
+                            toast.error(msg);
+                          }
+                        }}
+                        open={isAssociationDialogOpen}
+                        onOpenChange={setIsAssociationDialogOpen}
+                        mode="add"
+                      />
+                      </>
+                    )}
+                  </Card>
+                </motion.div>
+              )}
+              {isOwner && wall.associations && wall.associations.length > 0 && (
+                <AssociationDialog
+                  association={null}
+                  existingAssociations={Array.isArray(wall.associations) ? wall.associations : []}
+                  onSuccess={async (updated) => {
+                    try {
+                      await updateWall({ id: id!, data: { associations: updated } });
+                      toast.success("Association added!");
+                      setIsAssociationDialogOpen(false);
+                    } catch (e: unknown) {
+                      const msg = e instanceof Error ? e.message : (e as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to add";
+                      toast.error(msg);
+                    }
+                  }}
+                  open={isAssociationDialogOpen}
+                  onOpenChange={setIsAssociationDialogOpen}
+                  mode="add"
+                />
+              )}
             </motion.div>
-            )}
 
             {/* Awards Timeline */}
             {wall?.awards && wall.awards.length > 0 && (
@@ -1387,6 +1499,172 @@ const ContactForm = ({ wallOwnerEmail }: { wallOwnerEmail?: string }) => {
         </Button>
       </motion.div>
     </form>
+  );
+};
+
+// Association Dialog (Add/Edit) - Wall associations: name, description, image, url
+const AssociationDialog = ({
+  association,
+  existingAssociations,
+  onSuccess,
+  open,
+  onOpenChange,
+  mode,
+}: {
+  association: { index: number; name: string; description?: string; image?: string; url?: string } | null;
+  existingAssociations: Array<{ name: string; description?: string; image?: string; url?: string }>;
+  onSuccess: (updated: Array<{ name: string; description?: string; image?: string; url?: string }>) => void | Promise<void>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "add" | "edit";
+}) => {
+  const [formData, setFormData] = useState({
+    name: association?.name || "",
+    description: association?.description || "",
+    image: association?.image || "",
+    url: association?.url || "",
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState(association?.image || "");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (association) {
+        setFormData({ name: association.name, description: association.description || "", image: association.image || "", url: association.url || "" });
+        setImagePreview(association.image || "");
+        setImageFile(null);
+      } else {
+        setFormData({ name: "", description: "", image: "", url: "" });
+        setImagePreview("");
+        setImageFile(null);
+      }
+    }
+  }, [open, association]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const maxSizeMB = 10;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      toast.error(`Image must be under ${maxSizeMB}MB`);
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      let imageUrl = formData.image;
+      if (imageFile) {
+        const reader = new FileReader();
+        imageUrl = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve((reader.result as string) || "");
+          reader.onerror = () => reject(new Error("Failed to read image"));
+          reader.readAsDataURL(imageFile);
+        });
+      } else if (imagePreview && imagePreview.startsWith("data:")) {
+        imageUrl = imagePreview;
+      } else if (imagePreview) {
+        imageUrl = imagePreview; // already a URL
+      }
+      const newAssoc = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        image: imageUrl || undefined,
+        url: formData.url.trim() || undefined,
+      };
+      let updated: Array<{ name: string; description?: string; image?: string; url?: string }>;
+      if (mode === "edit" && association) {
+        updated = [...existingAssociations];
+        updated[association.index] = newAssoc;
+      } else {
+        updated = [...existingAssociations, newAssoc];
+      }
+      await onSuccess(updated);
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Association save error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{mode === "edit" ? "Edit Association" : "Add Association"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="assoc-name">Name *</Label>
+            <Input
+              id="assoc-name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., VES, Academy"
+              required
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="assoc-description">Description</Label>
+            <Textarea
+              id="assoc-description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief description..."
+              rows={2}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label htmlFor="assoc-image">Image</Label>
+            <Input
+              id="assoc-image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-2"
+            />
+            {imagePreview && (
+              <div className="mt-2">
+                <img src={imagePreview} alt="Preview" className="h-24 rounded-lg object-cover border" />
+              </div>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="assoc-url">URL</Label>
+            <Input
+              id="assoc-url"
+              type="url"
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+              placeholder="https://..."
+              className="mt-2"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+            <Button type="submit" disabled={submitting || !formData.name.trim()}>
+              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : mode === "edit" ? "Update" : "Add"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
