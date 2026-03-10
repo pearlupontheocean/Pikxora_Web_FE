@@ -33,7 +33,7 @@ import {
   LogIn,
 } from "lucide-react";
 import avatar from "@/assets/HeroSection/avatar.webp";
-import akhanda from "@/assets/HeroSection/Akhanda2001.jpg";
+import varnasi from "@/assets/HeroSection/varnasi.jpg";
 import deadpool from "@/assets/HeroSection/deadpool.png";
 import kanthara from "@/assets/HeroSection/kantara.webp";
 import dooms from "@/assets/HeroSection/dooms.jpg";
@@ -64,7 +64,7 @@ const heroMedia: HeroMedia[] = [
   },
   {
     type: "image",
-    src: akhanda,
+    src: varnasi,
     alt: "Salaar cinematic frame",
   },
   {
@@ -86,11 +86,11 @@ const heroMedia: HeroMedia[] = [
 
 const heroContent = [
   {
-    title: "Where Indian Pixels Power Global Dreams",
+    title: "Where  Pixels Power Global Dreams",
     tagline: "Cinematic universes, crafted frame by frame.",
   },
   {
-    title: "Indian Studios, Writing the Next Chapter",
+    title: "Global Studios, Writing the Next Chapter",
     tagline:
       "Showcasing cutting-edge reels that captivate audiences worldwide.",
   },
@@ -561,7 +561,7 @@ const Index = () => {
                 icon: Zap,
                 title: "Enhancement",
                 description:
-                  "Indian-born tools for seamless collaboration across time zones, powered by cutting-edge technology.",
+                  "Cutting-edge tools for seamless collaboration across time zones, powered by cutting-edge technology.",
               },
               {
                 icon: Heart,
@@ -881,7 +881,7 @@ const Index = () => {
                       category: item.category || "News",
                       image:
                         item.image_url ||
-                        [deadpool, akhanda, avatar, dooms][index % 4],
+                        [deadpool, varnasi, avatar, dooms][index % 4],
                     }))
                   : [
                       {
@@ -899,7 +899,7 @@ const Index = () => {
                           "Indian Studio Wins Oscar Nod for VFX",
                         teaser: "Spotlight on Hyderabad's Hidden Gems",
                         category: "Awards",
-                        image: akhanda,
+                        image: varnasi,
                       },
                       {
                         id: "fallback-3",
